@@ -1,15 +1,27 @@
-# Lesson 14: Advanced PCB - Stackup (Part 4)
+# Advanced PCB Stackup - Part 4: High-Speed/HDI Stackup & Microvias
 
-## 1. 専門知識 (Technical Theory)
-This lesson covers advanced concepts of Stackup in PCB design. In real-world Japanese manufacturing, strictly adhering to these principles prevents field returns.
+## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+เมื่อความหนาแน่นของวงจร (Density) สูงขึ้น เช่น การใช้ชิป BGA ที่มีพิตช์เล็กกว่า 0.8mm การเจาะ Through-hole ธรรมดาจะไม่สามารถดึงสายสัญญาณออกมาได้ ต้องใช้เทคโนโลยี High Density Interconnect (HDI)
+- **Microvia:** รูเจาะขนาดเล็ก (มัก <= 6 mil) ที่เจาะด้วยเลเซอร์ ทะลุเพียง 1-2 ชั้น
+- **Blind Via / Buried Via:** Blind via เจาะจากผิวนอกไปหยุดที่ชั้นใน, Buried via ซ่อนอยู่เฉพาะชั้นใน การใช้ Via เหล่านี้ช่วยลด Stub (ส่วนหางของรูเจาะที่ไม่ได้ใช้) ซึ่ง Stub นี้ทำตัวเป็น Antenna และ Resonant stub ที่สะท้อนสัญญาณในความถี่สูง
+- **Any-Layer HDI (ELIC - Every Layer Interconnect):** เทคโนโลยีขั้นสุดที่ใช้ Microvia เจาะเชื่อมกันได้ทุกชั้น (Stacked microvias) มักพบในสมาร์ทโฟน 
 
-## 2. 現場のOJT (On-the-Job Training Tip)
-**Senpai says:** Always double-check the datasheet tolerances. Never assume nominal values are guaranteed across temperature variations.
+## 2. ทริคหน้างาน OJT (On-the-Job Training Tricks)
+- **หลีกเลี่ยง Stacked Vias เกิน 3 ชั้น:** แม้ Any-layer จะทำ Stacked via (ซ้อนทับเป็นแนวตั้ง) ได้ แต่วิศวกรโรงงานมักแนะนำให้ทำ Staggered via (เยื้องศูนย์กัน) หากต้องทะลุหลายๆ ชั้น เพราะ Stacked via เสี่ยงต่อความล้มเหลวเนื่องจากการขยายตัวทางความร้อน (CTE mismatch) ตามแกน Z ตอนบัดกรี (Reflow)
+- **Aspect Ratio ของ Microvia:** ความลึกต่อความกว้างของรูเลเซอร์ไม่ควรเกิน 0.8:1 ถึง 1:1 ไม่งั้นการชุบทองแดง (Plating) ลงไปในรูจะยากมาก ทองแดงอาจไปไม่ถึงก้นรู เกิดปัญหา Open circuit ในอนาคต
 
-## 3. 必須日本語 (Essential Japanese)
-* PCB設計 (PCB Sekkei) - PCB Design
-* 評価確認 (Hyōka Kakunin) - Evaluation and Confirmation
+## 3. คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図 - Kenzu)
+- **ブラインドビア (Buraindo bia):** Blind via / รูเจาะบอด (เห็นด้านเดียว)
+- **ベリードビア (Beriido bia):** Buried via / รูเจาะฝัง (ไม่ทะลุผิวนอกเลย)
+- **スタガービア (Sutagaa bia):** Staggered vias / การเยื้องรูเจาะ
+- **スタックビア (Sutakku bia):** Stacked vias / การซ้อนรูเจาะ
+- **アスペクト比 (Asupekuto-hi):** Aspect ratio / อัตราส่วนความลึกต่อเส้นผ่านศูนย์กลางรู
 
-## 4. クイズ (Quick Quiz)
-Q: Why is this parameter critical for mass production (量産)?
-A: Because failure to control it leads to lower yield rates (歩留まり低下).
+## 4. ควิซท้ายบท (Quiz)
+**คำถาม:** ข้อใดเป็นเหตุผลทางไฟฟ้าหลักที่วิศวกรเลือกใช้ Blind Via สำหรับสัญญาณความเร็วสูงแทนที่จะเป็น Through-hole ธรรมดา?
+1. เพื่อประหยัดพื้นที่ด้านบนของบอร์ด
+2. เพื่อลดความต้านทานกระแสไฟ
+3. เพื่อลด Via Stub ซึ่งลดการสะท้อนของสัญญาณ (Signal Reflection)
+4. ทำให้มองไม่เห็นรูเจาะ
+
+*เฉลย: 3*
