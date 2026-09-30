@@ -1,15 +1,19 @@
-# Lesson 91: Advanced PCB - DFA (Part 1)
+# 091 - PCB DFA Part 1: Component Placement & Clearance (การจัดวางอุปกรณ์และระยะห่าง)
 
-## 1. 専門知識 (Technical Theory)
-This lesson covers advanced concepts of DFA in PCB design. In real-world Japanese manufacturing, strictly adhering to these principles prevents field returns.
+## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+การออกแบบเพื่อการประกอบ (Design for Assembly - DFA) เริ่มต้นจากการจัดวางอุปกรณ์ (Component Placement) ที่ถูกต้อง ระยะห่างระหว่างอุปกรณ์ (Clearance) ไม่ได้กำหนดแค่เพื่อป้องกันการช็อต แต่ต้องเผื่อระยะสำหรับหัว Nozzle ของเครื่อง Pick and Place (Mounter) และลด Shadow Effect เวลาผ่านเครื่อง Wave Soldering หรือ IR Reflow ทิศทางของ IC ควรจัดให้ไปในทิศทางเดียวกัน (Same Orientation) เพื่อลดเวลาในการหมุนหัว Nozzle และลดข้อผิดพลาดในการตรวจสอบ AOI
 
-## 2. 現場のOJT (On-the-Job Training Tip)
-**Senpai says:** Always double-check the datasheet tolerances. Never assume nominal values are guaranteed across temperature variations.
+## ทริคหน้างาน OJT (OJT Field Tricks)
+- **Shadow Effect Rule:** อุปกรณ์ตัวเตี้ยต้องไม่ถูกบังโดยอุปกรณ์ตัวสูงที่อยู่ด้านหน้าทิศทางการไหลของ Wave solder กฎทั่วไปคือระยะห่างต้องมากกว่าครึ่งหนึ่งของความสูงอุปกรณ์ตัวที่สูงกว่า
+- **Nozzle Clearance:** พวกคอนเนคเตอร์ขนาดใหญ่ ต้องเช็คเสมอว่าระยะประชิดมีอุปกรณ์ SMD เล็กๆ (เช่น 0402) หรือไม่ เพราะหัว Nozzle ขนาดใหญ่อาจจะไปกระแทกอุปกรณ์เล็กๆ ตอนลงเครื่อง Mounter
 
-## 3. 必須日本語 (Essential Japanese)
-* PCB設計 (PCB Sekkei) - PCB Design
-* 評価確認 (Hyōka Kakunin) - Evaluation and Confirmation
+## คำศัพท์ภาษาญี่ปุ่นในการตรวจแบบ (検図用語 - Kenzu Yōgo)
+- **部品配置 (Buhin Haichi):** Component Placement / การจัดวางอุปกรณ์
+- **実装 (Jissō):** Mounting, Assembly / การประกอบลงบอร์ด
+- **干渉 (Kanshō):** Interference, Collision / การชนกันหรือการทับซ้อนกันของอุปกรณ์
+- **極性 (Kyokusei):** Polarity / ขั้ว (เช่น ไดโอด, คาปาซิเตอร์) - "極性を揃える" (จัดขั้วให้ตรงกัน)
 
-## 4. クイズ (Quick Quiz)
-Q: Why is this parameter critical for mass production (量産)?
-A: Because failure to control it leads to lower yield rates (歩留まり低下).
+## ควิซท้ายบท (Quiz)
+1. ทำไมเราถึงต้องจัดวางอุปกรณ์ประเภทเดียวกันให้อยู่ในทิศทางเดียวกัน?
+2. Shadow Effect ในกระบวนการ Wave Soldering เกิดจากอะไร และแก้ไขในขั้นตอนออกแบบอย่างไร?
+*(ลองคิดคำตอบก่อนไปบทถัดไป)*

@@ -1,15 +1,21 @@
-# Lesson 94: Advanced PCB - DFA (Part 4)
+# 094 - PCB DFA Part 4: Panelization and Depaneling Techniques
 
-## 1. 専門知識 (Technical Theory)
-This lesson covers advanced concepts of DFA in PCB design. In real-world Japanese manufacturing, strictly adhering to these principles prevents field returns.
+## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+การทำ Panelization (การจัดเรียงหลายๆ บอร์ดเล็กให้เป็นแผงใหญ่) ช่วยเพิ่ม Throughput ในสายการผลิต มี 2 วิธีหลักคือ V-Score และ Route/Tab (Mouse Bites)
+- **V-Score:** เหมาะสำหรับบอร์ดสี่เหลี่ยม ข้อดีคือหักง่าย ใช้พื้นที่น้อย แต่ข้อเสียคือโครงสร้างบอร์ดจะอ่อนแอลง และตอนหักอาจเกิด Mechanical Stress กระทบอุปกรณ์ใกล้เคียง
+- **Route/Tab:** ใช้สำหรับบอร์ดรูปร่างอิสระ สามารถกำหนดตำแหน่งจุดหักได้ แต่ต้องระวังขอบบอร์ดไม่เรียบหลังจากหัก
 
-## 2. 現場のOJT (On-the-Job Training Tip)
-**Senpai says:** Always double-check the datasheet tolerances. Never assume nominal values are guaranteed across temperature variations.
+## ทริคหน้างาน OJT (OJT Field Tricks)
+- **Keep-out Zone for Routing:** อุปกรณ์ที่เปราะบาง เช่น MLCC (Ceramic Capacitors) ห้ามวางขนานและชิดกับแนวรอยหัก (V-Cut หรือ Tab) เด็ดขาด เพราะตอน Depaneling แรงบิด (Bending Stress) จะทำให้ MLCC ร้าว (Micro-crack) ภายใน ซึ่งทดสอบผ่านในโรงงานแต่ไปเสียที่มือลูกค้า (Field Failure) ควรวางทำมุม 90 องศากับรอยหัก หรือห่างออกมาอย่างน้อย 5mm
+- **Tooling Holes:** ขอบ Panel ต้องมี Tooling Holes อย่างน้อยฝั่งละ 2 รู สำหรับล็อคบอร์ดให้อยู่กับที่ตอนผ่านกระบวนการต่างๆ
 
-## 3. 必須日本語 (Essential Japanese)
-* PCB設計 (PCB Sekkei) - PCB Design
-* 評価確認 (Hyōka Kakunin) - Evaluation and Confirmation
+## คำศัพท์ภาษาญี่ปุ่นในการตรวจแบบ (検図用語 - Kenzu Yōgo)
+- **面付け (Mentsuke):** Panelization / การจัดเรียงบอร์ดเป็นแผง
+- **捨て基板 (Sute Kiban):** Breakaway tab, Waste edge / ขอบบอร์ดที่ทิ้งไปหลังจากการหัก
+- **Vカット (Bui-katto):** V-Score / รอยบากรูปตัววี
+- **ミシン目 (Mishin-me):** Mouse bites, Stamp holes / รูเจาะเรียงกันเหมือนรอยปรุเพื่อให้หักง่าย
+- **割れ (Ware):** Crack, Breakage / รอยร้าว (มักใช้กับอุปกรณ์เซรามิก)
 
-## 4. クイズ (Quick Quiz)
-Q: Why is this parameter critical for mass production (量産)?
-A: Because failure to control it leads to lower yield rates (歩留まり低下).
+## ควิซท้ายบท (Quiz)
+1. หากจำเป็นต้องวาง MLCC ใกล้กับแนว V-Cut ควรวางขนานหรือตั้งฉากกับแนว V-Cut? เพราะเหตุใด?
+2. ข้อได้เปรียบหลักของการใช้ Mouse Bites เทียบกับ V-Cut คืออะไร?
