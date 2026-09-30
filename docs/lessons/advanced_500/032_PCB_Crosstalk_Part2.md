@@ -1,15 +1,22 @@
-# Lesson 32: Advanced PCB - Crosstalk (Part 2)
+# Lesson 032: PCB Crosstalk - Part 2: Inductive Coupling & Return Path (誘導結合とリターンパス)
 
-## 1. 専門知識 (Technical Theory)
-This lesson covers advanced concepts of Crosstalk in PCB design. In real-world Japanese manufacturing, strictly adhering to these principles prevents field returns.
+## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+นอกจาก Capacitive แล้ว ยังมี **Inductive Coupling (誘導結合)** เกิดจาก Mutual Inductance ($L_m$) เมื่อ Aggressor มีการเปลี่ยนแปลงกระแส ($di/dt$) จะเหนี่ยวนำให้เกิดแรงดัน $V_{crosstalk} = L_m \frac{di}{dt}$ บน Victim net 
+สิ่งสำคัญที่สุดในการลด $L_m$ คือการควบคุม **Return Path** ให้กระแสไหลกลับอยู่ใกล้ใต้ Trace มากที่สุด (เช่น Solid Ground Plane) หาก Return path มีช่องโหว่ (Split plane) Loop area จะกว้างขึ้น ทำให้ $L_m$ พุ่งสูงขึ้นมหาศาล
 
-## 2. 現場のOJT (On-the-Job Training Tip)
-**Senpai says:** Always double-check the datasheet tolerances. Never assume nominal values are guaranteed across temperature variations.
+## ทริคหน้างาน OJT (On-the-Job Training Tricks)
+- **Solid Plane Rule:** ห้ามเดินสัญญาณ High-speed ข้าม Split plane เด็ดขาด หากเลี่ยงไม่ได้ ต้องใส่ Stitching capacitor คร่อม Split นั้นเพื่อให้ Return current ไหลผ่านได้ที่ความถี่สูง
+- **Orthogonal Routing:** หากสัญญาณความเร็วสูงต้องเดินบนเลเยอร์ที่ติดกัน (Adjacent layers) ให้เดินสายตั้งฉากกัน (Orthogonal) เพื่อลดพื้นที่ทับซ้อนและ Mutual Inductance
 
-## 3. 必須日本語 (Essential Japanese)
-* PCB設計 (PCB Sekkei) - PCB Design
-* 評価確認 (Hyōka Kakunin) - Evaluation and Confirmation
+## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図 - Kenzu)
+- **誘導結合 (Yuudou Ketsugou):** Inductive Coupling
+- **リターンパス (Ritaan Pasu):** Return Path
+- **スプリット (Supuritto):** Split (plane)
+- **直交配線 (Chokkou Haisen):** Orthogonal routing (การเดินสายตั้งฉาก)
+- **プレーン跨ぎ (Pureen Matagi):** Routing crossing a split plane (เป็นข้อห้าม)
 
-## 4. クイズ (Quick Quiz)
-Q: Why is this parameter critical for mass production (量産)?
-A: Because failure to control it leads to lower yield rates (歩留まり低下).
+## ควิซท้ายบท (Quiz)
+**Q1:** สาเหตุหลักที่ทำให้ Mutual Inductance ระหว่างสัญญาณเพิ่มขึ้นอย่างมากคืออะไร?
+**A:** การที่ Return Path ไม่สมบูรณ์ (เช่น มี Split plane) ทำให้ Loop Area ใหญ่ขึ้น
+**Q2:** การเดินสายแบบ 直交配線 (Orthogonal routing) ช่วยแก้ปัญหาอะไร?
+**A:** ลดพื้นที่ทับซ้อนของเส้นทางสัญญาณบนเลเยอร์ติดกัน เพื่อลด Crosstalk
