@@ -1,15 +1,21 @@
-# Lesson 113: Advanced FPGA - VHDL (Part 3)
+# Lesson 113: Clock Domain Crossing (CDC) Techniques
 
-## 1. 専門知識 (Technical Theory)
-This lesson covers advanced concepts of VHDL in FPGA design. In real-world Japanese manufacturing, strictly adhering to these principles prevents field returns.
+## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+Clock Domain Crossing (CDC) เป็นสาเหตุอันดับหนึ่งของความล้มเหลวแบบสุ่มในระบบจริง การส่งสัญญาณระหว่าง Clock Domains ที่ไม่สัมพันธ์กัน (Asynchronous) จะทำให้เกิด Metastability
+วิธีแก้สำหรับ Single-bit คือการใช้ 2-stage หรือ 3-stage Synchronizer
+สำหรับ Multi-bit ต้องใช้วิธี Gray Code Handshake หรือ Asynchronous FIFO ห้ามส่งสัญญาณหลายบิตผ่าน Synchronizer ธรรมดาเด็ดขาดเพราะจะเกิด Data Coherency Issue (Data Skew)
 
-## 2. 現場のOJT (On-the-Job Training Tip)
-**Senpai says:** Always double-check the datasheet tolerances. Never assume nominal values are guaranteed across temperature variations.
+## ทริคหน้างาน OJT (On-the-Job Training Tricks)
+- **MTBF Calculation:** ทำความเข้าใจ Mean Time Between Failures สำหรับระบบความปลอดภัยสูง
+- **CDC Tool Check:** ห้ามปล่อยผ่าน Warnings จาก CDC Analysis Tools (เช่น SpyGlass) เด็ดขาด
+- **False Path:** อย่าลืมใส่คำสั่ง `set_false_path` หรือ `set_clock_groups` ในไฟล์ SDC สำหรับสัญญาณที่มี Synchronizer แล้ว เพื่อให้เครื่องมือไม่เสียเวลาวิเคราะห์ Timing
 
-## 3. 必須日本語 (Essential Japanese)
-* FPGA設計 (FPGA Sekkei) - FPGA Design
-* 評価確認 (Hyōka Kakunin) - Evaluation and Confirmation
+## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図 - Kenzu)
+- **非同期 (Hidouki):** Asynchronous (อซิงโครนัส)
+- **メタスタビリティ (Metasutabiriti):** Metastability (ความไม่เสถียร)
+- **クロック乗り換え (Kurokku Norikae):** Clock Domain Crossing (CDC)
+- **誤動作 (Godosah):** Malfunction (การทำงานผิดปกติ)
 
-## 4. クイズ (Quick Quiz)
-Q: Why is this parameter critical for mass production (量産)?
-A: Because failure to control it leads to lower yield rates (歩留まり低下).
+## ควิซท้ายบท (Quiz)
+1. เหตุใดจึงไม่สามารถใช้ 2-stage Synchronizer กับข้อมูลขนาด 8-bit โดยตรงได้?
+2. จงอธิบายความหมายของ クロック乗り換え ในบริบทของการออกแบบชิป
