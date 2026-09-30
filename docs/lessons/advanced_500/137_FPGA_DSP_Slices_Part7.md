@@ -1,15 +1,21 @@
-# Lesson 137: Advanced FPGA - DSP Slices (Part 7)
+# FPGA DSP Slices เจาะลึกระดับ Senior: Part 7 - Cascading & Pre-adders for Symmetric FIR (カスケード接続とプリ加算器)
 
-## 1. 専門知識 (Technical Theory)
-This lesson covers advanced concepts of DSP Slices in FPGA design. In real-world Japanese manufacturing, strictly adhering to these principles prevents field returns.
+## ทฤษฎีวิศวกรรมเชิงลึก (高度なエンジニアリング理論)
+การสร้าง FIR Filter แบบสมมาตร (Symmetric FIR) สามารถประหยัดตัวคูณได้ครึ่งหนึ่งโดยการบวกข้อมูลขาเข้าที่คูณด้วยสัมประสิทธิ์เดียวกันก่อน นำมาประยุกต์กับ DSP48E2 ซึ่งมี Pre-adder (D-register) ภายใน การใช้เส้นทาง Cascade (PCOUT to PCIN) แทนการต่อสาย (Routing) ทั่วไปผ่าน Fabric จะป้องกันปัญหาสายหน่วง (Routing delay) ใน Multi-tap FIR filters
 
-## 2. 現場のOJT (On-the-Job Training Tip)
-**Senpai says:** Always double-check the datasheet tolerances. Never assume nominal values are guaranteed across temperature variations.
+## ทริคหน้างาน OJT (OJT現場のコツ)
+เวลาดีไซน์ FIR Filter ขนาดใหญ่ ห้ามใช้ Adder tree แบบปกติที่เขียนใน RTL เด็ดขาด! ให้ใช้โครงสร้าง Systolic Array โดยส่งผ่านผลลัพธ์ย่อย (Partial products) ผ่านพอร์ต PCIN/PCOUT ของ DSP Slices หากไม่ได้ใช้โครงสร้างนี้ จะเกิดคอขวดที่ Routing Resources ทำให้ $F_{max}$ ตกอย่างน่าเกลียด
 
-## 3. 必須日本語 (Essential Japanese)
-* FPGA設計 (FPGA Sekkei) - FPGA Design
-* 評価確認 (Hyōka Kakunin) - Evaluation and Confirmation
+## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図用日本語用語)
+- **カスケード接続 (Kasukeedo Setsuzoku):** Cascade connection
+- **対称FIRフィルタ (Taishou FIR Firuta):** Symmetric FIR Filter
+- **事前加算器 (Jizen Kasanki):** Pre-adder
+- **配線遅延 (Haisen Chien):** Routing delay
+- **リソースの枯渇 (Risoosu no Kokatsu):** การขาดแคลน Resource
 
-## 4. クイズ (Quick Quiz)
-Q: Why is this parameter critical for mass production (量産)?
-A: Because failure to control it leads to lower yield rates (歩留まり低下).
+## ควิซท้ายบท (確認テスト)
+**คำถาม:** การใช้ Pre-adder ใน DSP Slice เหมาะสมกับโครงสร้างใดมากที่สุด?
+1. IIR Filter
+2. Symmetric FIR Filter
+3. FFT Butterfly
+*เฉลย:* 2. Symmetric FIR Filter เพราะมีการนำสัญญาณ x[n] และ x[n-k] มาบวกกันก่อนคูณด้วยสัมประสิทธิ์ $h[n]$

@@ -1,15 +1,21 @@
-# Lesson 139: Advanced FPGA - DSP Slices (Part 9)
+# FPGA DSP Slices เจาะลึกระดับ Senior: Part 9 - Complex Multiplication Optimization (複素乗算の最適化)
 
-## 1. 専門知識 (Technical Theory)
-This lesson covers advanced concepts of DSP Slices in FPGA design. In real-world Japanese manufacturing, strictly adhering to these principles prevents field returns.
+## ทฤษฎีวิศวกรรมเชิงลึก (高度なエンジニアリング理論)
+การคูณจำนวนเชิงซ้อน (Complex Multiplication) $(A+jB) \times (C+jD)$ โดยทั่วไปต้องใช้ตัวคูณ 4 ตัว แต่สามารถทำ Optimization แบบ Gauss's trick ให้เหลือเพียง 3 ตัวคูณ แต่ต้องแลกกับการใช้ตัวบวกเพิ่มขึ้น ในโครงสร้าง FPGA การพิจารณา Trade-off ระหว่าง DSP Slices และ LUT Adders เป็นเรื่องที่ Senior Engineer ต้องตัดสินใจขึ้นอยู่กับ Resource ที่เหลือในชิป
 
-## 2. 現場のOJT (On-the-Job Training Tip)
-**Senpai says:** Always double-check the datasheet tolerances. Never assume nominal values are guaranteed across temperature variations.
+## ทริคหน้างาน OJT (OJT現場のコツ)
+ในงานสื่อสารไร้สาย (5G/SDR) การคูณจำนวนเชิงซ้อนมีเยอะมาก หาก DSP Slices ใกล้หมด การปรับไปใช้วิธี 3-multiplier จะช่วยกู้ชีวิตโปรเจกต์ได้ แต่ต้องระวังเรื่อง Latency ที่ไม่เท่ากันในแต่ละเส้นทาง (Datapath) ต้องเพิ่ม Shift Register ไว้ทำ Delay Matching เสมอ
 
-## 3. 必須日本語 (Essential Japanese)
-* FPGA設計 (FPGA Sekkei) - FPGA Design
-* 評価確認 (Hyōka Kakunin) - Evaluation and Confirmation
+## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図用日本語用語)
+- **複素乗算 (Fukuso Jouzan):** Complex multiplication
+- **最適化 (Saitekika):** Optimization
+- **遅延調整 (Chien Chousei):** Delay adjustment (Delay matching)
+- **トレードオフ (Toreedo Ofu):** Trade-off
+- **リソース使用率 (Risoosu Shiyouritsu):** Resource utilization
 
-## 4. クイズ (Quick Quiz)
-Q: Why is this parameter critical for mass production (量産)?
-A: Because failure to control it leads to lower yield rates (歩留まり低下).
+## ควิซท้ายบท (確認テスト)
+**คำถาม:** วิธีการของ Gauss สำหรับ Complex Multiplication ช่วยลดการใช้ฮาร์ดแวร์ส่วนใด?
+1. ลดจำนวน Adder (ตัวบวก)
+2. ลดจำนวน Multiplier (ตัวคูณ)
+3. ลดจำนวน Register
+*เฉลย:* 2. ลดจำนวน Multiplier จาก 4 ตัวเหลือ 3 ตัว แต่ต้องใช้ Adder เพิ่มขึ้น

@@ -1,15 +1,21 @@
-# Lesson 138: Advanced FPGA - DSP Slices (Part 8)
+# FPGA DSP Slices เจาะลึกระดับ Senior: Part 8 - Dynamic Operation & Pattern Detect (動的動作とパターン検出)
 
-## 1. 専門知識 (Technical Theory)
-This lesson covers advanced concepts of DSP Slices in FPGA design. In real-world Japanese manufacturing, strictly adhering to these principles prevents field returns.
+## ทฤษฎีวิศวกรรมเชิงลึก (高度なエンジニアリング理論)
+DSP Slices สมัยใหม่ไม่ได้มีไว้แค่บวกและคูณ แต่มีฟังก์ชัน Pattern Detect และ ALU ที่สามารถเปลี่ยนโหมดการทำงานแบบ Dynamic ทุกๆ Clock cycle ผ่านพอร์ต OPMODE, ALUMODE และ CARRYINSEL การใช้ Pattern Detect ช่วยให้สามารถทำ Convergent Rounding หรือทำ Auto-reset สำหรับ Accumulator ได้โดยไม่ต้องใช้ Logic ภายนอกเลย
 
-## 2. 現場のOJT (On-the-Job Training Tip)
-**Senpai says:** Always double-check the datasheet tolerances. Never assume nominal values are guaranteed across temperature variations.
+## ทริคหน้างาน OJT (OJT現場のコツ)
+การทำ Floating-point หรือ Fixed-point rounding แบบ Symmetric มักจะเปลือง Logic มากถ้าทำบน Fabric แต่ถ้าใช้ Pattern Detection ภายใน DSP Slice ร่วมกับ CARRYIN จะทำให้ประหยัดทั้ง Power และพื้นที่ (Area) อย่าลืมเซ็ต ALUMODE ให้ถูกต้องตาม Timing diagram
 
-## 3. 必須日本語 (Essential Japanese)
-* FPGA設計 (FPGA Sekkei) - FPGA Design
-* 評価確認 (Hyōka Kakunin) - Evaluation and Confirmation
+## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図用日本語用語)
+- **動的再構成 (Douteki Saikousei):** Dynamic reconfiguration
+- **パターン検出 (Pataan Kenshutsu):** Pattern detection
+- **丸め処理 (Marume Shori):** Rounding processing
+- **演算モード (Enzan Moodo):** Operation mode (OPMODE)
+- **桁上げ (Ketaage):** Carry (CARRYIN)
 
-## 4. クイズ (Quick Quiz)
-Q: Why is this parameter critical for mass production (量産)?
-A: Because failure to control it leads to lower yield rates (歩留まり低下).
+## ควิซท้ายบท (確認テスト)
+**คำถาม:** สัญญาณใดที่ใช้สำหรับควบคุมฟังก์ชันการบวก/ลบ/ตรรกะ ของ DSP48 ALU ในระดับ Cycle-by-cycle?
+1. OPMODE
+2. ALUMODE
+3. INMODE
+*เฉลย:* 2. ALUMODE เป็นสัญญาณที่ใช้ควบคุมการทำงานของ ALU (Logic หรือ Arithmetic)
