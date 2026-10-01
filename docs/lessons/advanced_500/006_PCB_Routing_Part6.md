@@ -1,22 +1,24 @@
-# Lesson 6: High-Speed Differential Pairs Routing (高速差動配線)
+# บทที่ 6: High-Speed Digital Routing (DDR, PCIe) - ระดับ Senior
 
-## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-Differential pair routing เป็นหัวใจสำคัญของการส่งสัญญาณความเร็วสูง (เช่น USB 3.0, PCIe, HDMI) หลักการคือการส่งสัญญาณที่มีเฟสต่างกัน 180 องศา (D+ และ D-) เพื่อหักล้าง Common-mode noise 
-- **Intra-pair skew (Phase tolerance):** ความยาวของสองเส้นใน pair เดียวกันต้องเท่ากันเป๊ะ (มักจะยอมให้ต่างกันได้ระดับ mil หรือน้อยกว่า) เพื่อไม่ให้เกิด Phase shift ซึ่งจะเปลี่ยนโหมดจาก Differential ไปเป็น Common-mode ทำให้เกิด EMI
-- **Coupling:** ต้องรักษาระยะห่าง (Spacing) ระหว่าง D+ และ D- ให้สม่ำเสมอตลอดเส้นทาง เพื่อรักษา Differential Impedance (มักจะเป็น 90 หรือ 100 โอห์ม)
-- **Return Path:** ระนาบอ้างอิง (Reference Plane) ต้องเป็นเนื้อเดียวกัน ห้ามลากผ่านรอยแยก (Split plane) เด็ดขาด
+## ทฤษฎีวิศวกรรมเชิงลึก (高度なエンジニアリング理論)
+การเดินสายสำหรับสัญญาณ High-Speed (เช่น DDR4/5, PCIe Gen4/5) ต้องคำนึงถึง Signal Integrity (SI) เป็นหลัก การควบคุม Impedance (特性インピーダンス) ต้องแม่นยำ ทั้ง Single-ended (50Ω) และ Differential (85Ω/100Ω) การทำ Length Matching หรือ Delay Matching ต้องคิดถึง Propagation Delay ที่ต่างกันในชั้นผิว (Microstrip) และชั้นใน (Stripline) รวมถึงผลกระทบจาก Fiber Weave Effect (ガラス織り効果) ของวัสดุ FR4 ที่ความถี่สูง ซึ่งอาจทำให้เกิด Skew ระหว่างคู่สัญญาณ 
 
-## ทริคหน้างาน OJT (On-the-Job Tricks)
-- การทำ Length matching ควรทำที่บริเวณจุดที่เกิดความไม่เท่ากัน (Mismatch) ทันที ไม่ควรไปทดความยาวที่ปลายทาง
-- หลีกเลี่ยงการใช้ Via กับสัญญาณ High-speed ให้มากที่สุด แต่ถ้าจำเป็นต้องเปลี่ยน Layer ต้องเพิ่ม Ground return via ไว้ข้างๆ เพื่อให้กระแสไหลกลับได้สะดวก (Return path continuity)
-- การเลี้ยว (Bending) ควรใช้มุม 45 องศา หรือการทำ Arc (โค้ง) แทนมุม 90 องศา
+## ทริคหน้างาน OJT (現場のコツ)
+- **การเดินสาย Differential Pair**: ระวังการแตกคู่ (Uncoupling) เมื่อผ่าน Via หรือ BGA breakout ให้รักษาช่องว่างให้สม่ำเสมอ หากต้องหลบ Via ให้ชดเชยความยาวทันทีที่จุดเกิด Skew (Phase Matching) ไม่ใช่ไปชดเชยที่ปลายสาย
+- **Return Path**: ห้ามเดินสายข้ามรอยแยก (Split Plane) ของ Ground โดยเด็ดขาด (リターンパスの分断) หากจำเป็นจริงๆ ต้องมี Stitching Capacitor ใกล้ๆ 
 
-## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図 - Kenzu)
-- **等長配線 (Touchou haisen):** การเดินสายให้ยาวเท่ากัน (Length matching)
-- **差動インピーダンス (Sadou inpiidansu):** Differential impedance
-- **リターンパス (Ritaan pasu):** Return path
-- **ベタ抜け (Beta nuke):** การเกิดช่องว่างในระนาบทองแดง (Void in copper pour) ซึ่งควรระวังไม่ให้รบกวน Return path
+## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図用語 - けんずようご)
+- **等長配線 (Tōchō haisen):** Length Matching / การทำให้สายยาวเท่ากัน
+- **特性インピーダンス (Tokusei inpīdansu):** Characteristic Impedance / อิมพีแดนซ์เฉพาะ
+- **クロストーク (Kurosutōku):** Crosstalk / สัญญาณรบกวนข้ามสาย
+- **リターンパス (Ritān pasu):** Return Path / เส้นทางไหลกลับของกระแส
+- **ガラス織り (Garasu ori):** Glass weave / ลายทอของไฟเบอร์กลาส
 
-## ควิซท้ายบท (Quiz)
-1. การเกิด Intra-pair skew ที่มากเกินไปส่งผลเสียอย่างไร?
-2. ทำไมถึงต้องวาง Ground via ใกล้ๆ กับ Signal via เมื่อมีการเปลี่ยน Layer ของสัญญาณ Differential?
+## ควิซท้ายบท (確認テスト)
+1. การชดเชยความยาว (Phase Matching) ใน Differential Pair ควรทำที่ตำแหน่งใด?
+   a) ที่ปลายสายฝั่ง Receiver
+   b) ที่ต้นสายฝั่ง Transmitter
+   c) ใกล้กับจุดที่เกิดความไม่สมดุล (Mismatch) มากที่สุด
+   d) ตรงกลางสายพอดี
+
+*(เฉลย: c - เพื่อลดโอกาสการเกิด Common-mode noise สะสมในสาย)*

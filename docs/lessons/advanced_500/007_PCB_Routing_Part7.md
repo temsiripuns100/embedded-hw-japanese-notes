@@ -1,22 +1,24 @@
-# Lesson 7: Power Delivery Network (PDN) and Decoupling Strategy (電源供給網とパスコン配置)
+# บทที่ 7: RF/Microwave PCB Routing - ระดับ Senior
 
-## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-เป้าหมายของ PDN ที่ดีคือการรักษาระดับแรงดันให้คงที่ ภายใต้สภาวะที่มีการดึงกระแสแบบชั่วขณะ (Transient current) อย่างรวดเร็วจาก IC 
-- **Target Impedance ($Z_{target}$):** ต้องออกแบบ PDN ให้มี Impedance ต่ำกว่า Target Impedance ตั้งแต่ DC ไปจนถึงความถี่สูงสุดที่ระบบทำงาน
-- **Decoupling Capacitors:** ไม่ใช่แค่การ "กรอง" แต่เป็นการทำหน้าที่เป็น "แหล่งจ่ายประจุชั่วคราว" ที่อยู่ใกล้ IC มากที่สุด การเลือกค่า C (Bulk, High-frequency) และแพ็กเกจ (0402, 0201) มีผลต่อ Equivalent Series Inductance (ESL) ซึ่ง ESL นี้เองที่เป็นตัวขัดขวางการจ่ายกระแสความถี่สูง
-- **Plane Capacitance:** การวาง Power Plane ให้ชิดกับ Ground Plane มากๆ (เช่น ระยะห่าง < 4 mil) จะสร้าง Capacitance ธรรมชาติที่มี ESL ต่ำมาก ซึ่งสำคัญมากสำหรับความถี่ระดับ GHz
+## ทฤษฎีวิศวกรรมเชิงลึก (高度なエンジニアリング理論)
+สำหรับวงจรความถี่วิทยุ (RF) พฤติกรรมของสายสัญญาณจะเปลี่ยนเป็น Distributed Element การคำนวณ Transmission Line (เช่น Coplanar Waveguide, Microstrip) ต้องคำนึงถึง Dielectric Constant (Dk) และ Dissipation Factor (Df) ของวัสดุ PCB (เช่น Rogers, Teflon) อย่างยิ่ง การทำ Via Fencing (Grounded Vias) ตามขอบสาย RF ช่วยป้องกันการแพร่กระจายของคลื่นแม่เหล็กไฟฟ้าและการรบกวนระหว่างช่องสัญญาณ (Isolation) รัศมีการโค้งงอของสาย (Bend) ต้องใช้ Mitered Bend หรือเส้นโค้ง (Arc) เพื่อลด Mismatch ที่มุม
 
-## ทริคหน้างาน OJT (On-the-Job Tricks)
-- การวาง Decoupling Capacitor: วางตัวเล็ก (ความจุต่ำ/แพ็กเกจเล็ก) ให้ใกล้ขา IC ที่สุด แล้วค่อยไล่ตัวใหญ่ (Bulk) ออกมา
-- การเดินเส้นทาง (Routing) ไปยัง C: ควรใช้ Via ให้อยู่ใกล้ Pad ของ C มากที่สุด (Via-in-pad ถ้าโรงงานทำได้ หรือวางชิด Pad) เพื่อลด Loop Inductance
-- การแบ่ง Power Island (電源分割): ต้องระวังการ overlap กับสัญญาณความเร็วสูงบนชั้นติดกัน
+## ทริคหน้างาน OJT (現場のコツ)
+- **RF Trace Clearance**: ระยะห่างจากสาย RF ถึง Ground Pour ควรคำนวณตาม Coplanar Waveguide Fencing ทั่วไปจะแนะนำให้ห่างอย่างน้อย 2-3 เท่าของความกว้างสาย (Trace Width)
+- **Via Fencing Pitch**: ระยะห่างระหว่าง Ground Vias ที่ใช้บล็อกสัญญาณ ต้องน้อยกว่า $\lambda/10$ ของความถี่สูงสุดในระบบ เพื่อป้องกันไม่ให้คลื่นเล็ดลอดผ่านไปได้
 
-## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図 - Kenzu)
-- **パスコン (Pasukon):** Decoupling capacitor (มาจาก Bypass Capacitor)
-- **電源分割 (Dengen bunkatsu):** Power plane split / Island
-- **ノイズ対策 (Noizu taisaku):** Noise countermeasure (การจัดการนอยส์)
-- **実装面積 (Jissou menseki):** พื้นที่ลงอุปกรณ์ (Mounting area)
+## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図用語 - けんずようご)
+- **高周波 (Kōshūha):** High Frequency / ความถี่สูง
+- **誘電率 (Yūdenritsu):** Dielectric Constant (Dk) / ค่าคงที่ไดอิเล็กทริก
+- **誘電正接 (Yūden seisetsu):** Dissipation Factor (Df) / ค่าการสูญเสียในไดอิเล็กทริก
+- **ビアフェンス (Bia fensu):** Via Fence / การตีกรอบด้วย Via
+- **アイソレーション (Aisorēshon):** Isolation / การแยกสัญญาณไม่ให้กวนกัน
 
-## ควิซท้ายบท (Quiz)
-1. ESL ใน Capacitor มีผลเสียอย่างไรต่อการออกแบบ PDN?
-2. Plane Capacitance เกิดจากอะไร และมีประโยชน์อย่างไรในช่วงความถี่สูง?
+## ควิซท้ายบท (確認テスト)
+1. ระยะห่างของ Via (Via Pitch) ในการทำ Via Fencing สำหรับ RF Board ควรมีค่าเท่าใด?
+   a) มากกว่าความยาวคลื่น ($\lambda$)
+   b) น้อยกว่า $\lambda/20$ ถึง $\lambda/10$ ของความถี่สูงสุด
+   c) 50 mil เสมอ
+   d) เท่ากับความหนาของบอร์ด
+
+*(เฉลย: b - เพื่อให้กำแพง Via ทำงานเสมือนผนังทึบสำหรับความถี่นั้นๆ)*
