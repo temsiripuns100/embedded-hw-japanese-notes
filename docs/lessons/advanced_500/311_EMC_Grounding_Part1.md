@@ -1,15 +1,16 @@
-# Advanced Lesson: EMC_Grounding_Part1
+# Advanced Lesson: EMC - Grounding (Premium)
 
-## 1. 専門知識 (Deep Engineering Theory)
-In-depth analysis of EMC_Grounding_Part1. This section covers the advanced architecture, edge cases, and high-level design constraints for mass production.
+## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+EMC ไม่ใช่เรื่องของโชค แต่เป็นวิทยาศาสตร์ของการจัดการ Return Path และ Loop Area การป้องกัน Radiated Emission เริ่มต้นที่ Stackup และการวาง Decoupling Capacitor ที่มีค่า ESL ต่ำที่สุด ในหัวข้อ **Grounding** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
 
-## 2. 現場のOJT (On-the-Job Training Tip)
-**Senpai says:** Always verify the edge cases. In {topic}, missing a corner case can cost millions in recalls.
+## 2. ทริคหน้างาน OJT (Field Tricks)
+**💡 ข้อคิดจากรุ่นพี่:** การใช้ Probe วัดสัญญาณ High-speed ต้องใช้สายกราวด์สั้นที่สุด (Spring ground) ไม่งั้นจะเห็น Ringing ปลอม
 
-## 3. 必須日本語 (Essential Japanese for Kenzu)
-* EMC_Grounding_Part1解析 (EMC_Grounding_Part1 Kaiseki) - EMC_Grounding_Part1 Analysis
-* 不具合 (Fuguai) - Defect / Bug
+## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
+* 歩留まり (Budomari) - Yield rate
+* 故障 (Koshou) - การเสีย/ชำรุด
+* 妥当性 (Datousei) - ความสมเหตุสมผล (Validity)
 
-## 4. クイズ (Quiz)
-**Q:** What is the most critical constraint in EMC_Grounding_Part1?
-**A:** Ensuring worst-case scenarios are fully simulated and verified.
+## 4. ควิซท้ายบท (Quiz)
+**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ Grounding?
+**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ

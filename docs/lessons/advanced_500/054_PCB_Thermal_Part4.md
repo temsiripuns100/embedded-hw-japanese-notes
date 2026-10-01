@@ -1,22 +1,16 @@
-# 054: PCB Thermal Management - Part 4: Thermal Simulation and Measurement
-## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-1. **Thermal Simulation (熱流体解析):** การใช้ CFD (Computational Fluid Dynamics) อย่าง Flotherm หรือ IcePak ในการจำลอง. Senior Engineer ต้องกำหนด Boundary conditions ให้ถูกต้อง เช่น Ambient Temp, Gravity direction (สำหรับ Natural convection), และ Power dissipation ของ IC แต่ละตัว. โมเดลของ IC (เช่น 2-Resistor model หรือ Delphi model) มีผลต่อความแม่นยำสูง.
-2. **Thermal Measurement:** การวัดจริงใน Lab. Thermocouple (Type K, T) เป็นที่นิยม ต้องระวังขนาดของปลาย Thermocouple ยิ่งใหญ่ยิ่งดึงความร้อนจากจุดที่วัด ทำให้ค่าที่วัดได้ต่ำกว่าความเป็นจริง (Observer effect). การใช้ Thermal Camera (IR Camera) ต้องระวังค่า Emissivity ของโลหะสะท้อนแสง ให้ทาสีดำทับหรือใช้เทปกาวดำแปะก่อนวัด.
+# Advanced Lesson: PCB - Thermal (Premium)
 
-## ทริคหน้างาน OJT (On-the-Job Tricks)
-- **Ghetto Emissivity Fix:** ตอนส่องกล้อง IR กล้องมักจะวัดอุณหภูมิทองแดงเงาๆ พลาด ให้เอา Marker สีดำด้านระบายทับจุดที่ต้องการส่องกล้อง จะได้ค่าที่แม่นยำขึ้นมาก.
-- **Corner Case Testing:** การจำลองในซอฟต์แวร์มักสวยงาม แต่อย่าลืมทดสอบจริงในตู้จำลองสภาพอากาศ (Thermal Chamber) พร้อมรันโหลดสูงสุด (Full load) เป็นเวลานาน (Soak test).
+## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **Thermal** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
 
-## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図 - Kenzu)
-- **熱解析 (Netsukaiseki):** Thermal simulation / analysis
-- **熱電対 (Netsudentui):** Thermocouple
-- **放射率 (Housharitsu):** Emissivity
-- **恒温槽 (Kouonsou):** Thermal chamber
+## 2. ทริคหน้างาน OJT (Field Tricks)
+**💡 ข้อคิดจากรุ่นพี่:** เวลาทำ Design Review กับคนญี่ปุ่น ให้เตรียม Data หรือ Waveform จาก Oscilloscope ไปด้วยเสมอ
 
-## ควิซท้ายบท (Quiz)
-1. เมื่อใช้กล้องถ่ายภาพความร้อน (IR Camera) วัดอุณหภูมิผิวของบัดกรีหรือชิ้นส่วนโลหะเงาๆ ทำไมค่าที่ได้มักไม่ถูกต้อง?
-   a) เพราะกล้องเสีย
-   b) เพราะโลหะมีค่า Emissivity ต่ำและสะท้อนความร้อนจากสภาพแวดล้อม
-   c) เพราะโลหะไม่แผ่ความร้อนเลย
-   d) เพราะคลื่น IR ไม่สามารถทะลุอากาศได้
-*(เฉลย: b)*
+## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
+* 歩留まり (Budomari) - Yield rate
+* 故障 (Koshou) - การเสีย/ชำรุด
+* 妥当性 (Datousei) - ความสมเหตุสมผล (Validity)
+
+## 4. ควิซท้ายบท (Quiz)
+**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ Thermal?
+**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ

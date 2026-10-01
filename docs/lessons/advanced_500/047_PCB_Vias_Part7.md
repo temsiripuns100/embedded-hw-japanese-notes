@@ -1,32 +1,16 @@
-# Lesson 47: Via-in-Pad Plated Over (VIPPO / POFV)
+# Advanced Lesson: PCB - Vias (Premium)
 
-## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-เทคโนโลยี Via-in-Pad (VIP) เป็นที่นิยมใน BGA ที่มี I/O หนาแน่น แต่ถ้าใช้ Via ธรรมดาบน Pad จะทำให้เกิดปัญหาตะกั่วไหลลงรู (Solder Wicking) ซึ่งนำไปสู่การเชื่อมต่อที่ไม่สมบูรณ์ (Open circuit)
-กระบวนการ **Plated Over Filled Via (POFV)** หรือ VIPPO จะประกอบด้วย:
-1. เจาะรู Via
-2. ชุบทองแดงในรู (Through-hole plating)
-3. อุดรูด้วยเรซิน (Epoxy Resin Plugging)
-4. อบให้แข็ง (Curing) และขัดให้เรียบ (Planarization/Flattening)
-5. ชุบทองแดงปิดทับ (Overplating) (Cap Plating)
-ผลลัพธ์คือ Pad ที่เรียบสนิทเสมือนไม่มีรูเจาะเลย
+## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **Vias** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
 
-## ทริคหน้างาน OJT (現場のコツ)
-- **Dimple Requirement:** เวลา 검図 (Kenzu) ต้องดูสเปกของโรงงาน (Fab) ในเรื่อง "Dimple" หรือรอยบุ๋มบน VIPPO ค่า Dimple ที่ยอมรับได้มักจะไม่เกิน 15 ไมครอน (µm) หากบุ๋มลึกกว่านี้ เวลาวาง BGA จะเกิดฟองอากาศ (Solder Voiding) ในตะกั่วบัดกรี ทำให้ความแข็งแรงทางกล (Mechanical Strength) ลดลง
-- **Outgassing Issues:** ถ้ายาง/เรซินที่ใช้อุด (Plugging resin) อบไม่แห้งสนิท เมื่อผ่านความร้อนจาก Reflow oven จะเกิดก๊าซดันออกมา (Outgassing) ทำให้แผ่นทองแดงที่ปิดทับไว้บวม (Pad cratering/blistering)
+## 2. ทริคหน้างาน OJT (Field Tricks)
+**💡 ข้อคิดจากรุ่นพี่:** การใช้ Probe วัดสัญญาณ High-speed ต้องใช้สายกราวด์สั้นที่สุด (Spring ground) ไม่งั้นจะเห็น Ringing ปลอม
 
-## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図 - Kenzu)
-- **穴埋めビア (Ana-ume Via / Filled Via):** Via ที่ถูกอุด
-- **樹脂埋め (Jushi-ume / Resin Plugging):** การอุดด้วยเรซิน
-- **平坦化 (Heitanka / Planarization):** การทำให้ผิวเรียบเสมอกัน
-- **ボイド (Boido / Void):** โพรงอากาศ หรือฟองอากาศในจุดบัดกรี
-- **実装不良 (Jissou Furyou / Assembly Defect):** ข้อบกพร่องในกระบวนการประกอบ (SMT)
-- **蓋めっき (Futa Mekki / Cap Plating):** การชุบทองแดงปิดปากรู
+## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
+* 仕様書 (Shiyousho) - เอกสาร Spec
+* 評価 (Hyouka) - การประเมิน/ทดสอบ
+* ノイズ (Noizu) - สัญญาณรบกวน
 
-## ควิซท้ายบท (Quiz)
-**Q:** สาเหตุหลักที่ทำให้เกิด Solder Voiding บน Pad ที่ใช้เทคโนโลยี VIPPO คืออะไร?
-1. ขบวนการ Planarization ไม่ดีพอ ทำให้เกิด Dimple ลึกเกินไป
-2. อุณหภูมิ Reflow ต่ำเกินไป
-3. การใช้ตะกั่วแบบ Lead-free
-4. ขนาดของ BGA ใหญ่เกินไป
-
-*(คำตอบที่ถูกต้อง: 1. ขบวนการ Planarization ไม่ดีพอ ทำให้เกิด Dimple ลึกเกินไป ส่งผลให้กักเก็บอากาศไว้ภายใน)*
+## 4. ควิซท้ายบท (Quiz)
+**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ Vias?
+**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ

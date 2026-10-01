@@ -1,20 +1,16 @@
-# Lesson 114: DSP Blocks & Memory Inferencing
+# Advanced Lesson: FPGA - VHDL (Premium)
 
-## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-การประมวลผลสัญญาณดิจิทัล (DSP) ใน FPGA ปัจจุบันจะใช้ DSP48 slices (ใน Xilinx) หรือ DSP Blocks (ใน Intel) การเขียน VHDL แบบเดิมที่เป็นเครื่องหมาย `*` หรือ `+` โดยไม่มี Pipeline register จะทำให้ชิปดึง LUT มาทำคณิตศาสตร์แทนที่จะใช้ Hard IP ทำให้เปลืองพื้นที่และทำงานช้า
-สำหรับการใช้ Memory (BRAM/URAM) ควรเขียนโค้ดตาม Template ของผู้ผลิตเพื่อให้เครื่องมือสามารถอนุมาน (Infer) ไปใช้ Block RAM ได้ ไม่เช่นนั้นจะกลายเป็น Distributed RAM ซึ่งสูญเสียทรัพยากรอย่างหนัก
+## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **VHDL** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
 
-## ทริคหน้างาน OJT (On-the-Job Training Tricks)
-- **Pipeline Multipliers:** สังเกต Document ของ FPGA เสมอว่า DSP Block มี Register ภายในกี่สเตจ (เช่น MREG, PREG) แล้วเขียน VHDL ให้มี Delay เทียบเท่ากัน
-- **RAM Initialization:** สามารถใส่ค่าเริ่มต้นให้ Block RAM ได้โดยตรงผ่าน `$readmemb` หรือการประกาศ array ค่าคงที่ใน VHDL ซึ่งจะถูกโหลดพร้อมกระบวนการ Configuration
-- **Resource Sharing:** หากระบบทำงานที่ความถี่สูงกว่า Data Rate มากๆ ให้ใช้ Time-division multiplexing (TDM) ใช้ DSP ตัวเดียวคำนวณหลายค่าเพื่อประหยัด Resource
+## 2. ทริคหน้างาน OJT (Field Tricks)
+**💡 ข้อคิดจากรุ่นพี่:** ก่อนส่งแบบไปผลิต ให้เช็ค Gerber ด้วยตัวเองเสมอ อย่าเชื่อแค่ DRC ของโปรแกรม
 
-## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図 - Kenzu)
-- **積和演算 (Sekiwa Enzan):** Multiply-Accumulate / MAC (การคูณและบวกสะสม)
-- **内部メモリ (Naibu Memori):** Internal Memory (หน่วยความจำภายใน)
-- **パイプライン処理 (Paipurain Shori):** Pipeline Processing (การประมวลผลแบบไปป์ไลน์)
-- **最適化 (Saitekika):** Optimization (การปรับให้เหมาะสมที่สุด)
+## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
+* 歩留まり (Budomari) - Yield rate
+* 故障 (Koshou) - การเสีย/ชำรุด
+* 妥当性 (Datousei) - ความสมเหตุสมผล (Validity)
 
-## ควิซท้ายบท (Quiz)
-1. การเขียนโค้ดที่ทำให้เครื่องมือตีความ RAM ไปเป็น Distributed RAM แทน Block RAM มีผลเสียอย่างไร?
-2. 内部メモリ มีประโยชน์อย่างไรเมื่อเทียบกับการใช้ External DDR?
+## 4. ควิซท้ายบท (Quiz)
+**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ VHDL?
+**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ

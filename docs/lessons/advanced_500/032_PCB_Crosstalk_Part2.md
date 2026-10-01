@@ -1,22 +1,16 @@
-# Lesson 032: PCB Crosstalk - Part 2: Inductive Coupling & Return Path (誘導結合とリターンパス)
+# Advanced Lesson: PCB - Crosstalk (Premium)
 
-## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-นอกจาก Capacitive แล้ว ยังมี **Inductive Coupling (誘導結合)** เกิดจาก Mutual Inductance ($L_m$) เมื่อ Aggressor มีการเปลี่ยนแปลงกระแส ($di/dt$) จะเหนี่ยวนำให้เกิดแรงดัน $V_{crosstalk} = L_m \frac{di}{dt}$ บน Victim net 
-สิ่งสำคัญที่สุดในการลด $L_m$ คือการควบคุม **Return Path** ให้กระแสไหลกลับอยู่ใกล้ใต้ Trace มากที่สุด (เช่น Solid Ground Plane) หาก Return path มีช่องโหว่ (Split plane) Loop area จะกว้างขึ้น ทำให้ $L_m$ พุ่งสูงขึ้นมหาศาล
+## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **Crosstalk** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
 
-## ทริคหน้างาน OJT (On-the-Job Training Tricks)
-- **Solid Plane Rule:** ห้ามเดินสัญญาณ High-speed ข้าม Split plane เด็ดขาด หากเลี่ยงไม่ได้ ต้องใส่ Stitching capacitor คร่อม Split นั้นเพื่อให้ Return current ไหลผ่านได้ที่ความถี่สูง
-- **Orthogonal Routing:** หากสัญญาณความเร็วสูงต้องเดินบนเลเยอร์ที่ติดกัน (Adjacent layers) ให้เดินสายตั้งฉากกัน (Orthogonal) เพื่อลดพื้นที่ทับซ้อนและ Mutual Inductance
+## 2. ทริคหน้างาน OJT (Field Tricks)
+**💡 ข้อคิดจากรุ่นพี่:** การใช้ Probe วัดสัญญาณ High-speed ต้องใช้สายกราวด์สั้นที่สุด (Spring ground) ไม่งั้นจะเห็น Ringing ปลอม
 
-## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図 - Kenzu)
-- **誘導結合 (Yuudou Ketsugou):** Inductive Coupling
-- **リターンパス (Ritaan Pasu):** Return Path
-- **スプリット (Supuritto):** Split (plane)
-- **直交配線 (Chokkou Haisen):** Orthogonal routing (การเดินสายตั้งฉาก)
-- **プレーン跨ぎ (Pureen Matagi):** Routing crossing a split plane (เป็นข้อห้าม)
+## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
+* 歩留まり (Budomari) - Yield rate
+* 故障 (Koshou) - การเสีย/ชำรุด
+* 妥当性 (Datousei) - ความสมเหตุสมผล (Validity)
 
-## ควิซท้ายบท (Quiz)
-**Q1:** สาเหตุหลักที่ทำให้ Mutual Inductance ระหว่างสัญญาณเพิ่มขึ้นอย่างมากคืออะไร?
-**A:** การที่ Return Path ไม่สมบูรณ์ (เช่น มี Split plane) ทำให้ Loop Area ใหญ่ขึ้น
-**Q2:** การเดินสายแบบ 直交配線 (Orthogonal routing) ช่วยแก้ปัญหาอะไร?
-**A:** ลดพื้นที่ทับซ้อนของเส้นทางสัญญาณบนเลเยอร์ติดกัน เพื่อลด Crosstalk
+## 4. ควิซท้ายบท (Quiz)
+**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ Crosstalk?
+**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ

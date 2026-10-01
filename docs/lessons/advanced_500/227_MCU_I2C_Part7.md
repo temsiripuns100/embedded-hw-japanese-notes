@@ -1,15 +1,16 @@
-# Advanced Lesson: MCU_I2C_Part7
+# Advanced Lesson: MCU - I2C (Premium)
 
-## 1. 専門知識 (Deep Engineering Theory)
-In-depth analysis of MCU_I2C_Part7. This section covers the advanced architecture, edge cases, and high-level design constraints for mass production.
+## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+การออกแบบเฟิร์มแวร์ระดับต่ำ (Bare-metal) หรือ RTOS สำหรับ MCU จำเป็นต้องเข้าใจสถาปัตยกรรม Bus (เช่น AHB/APB) และความหน่วงของ Interrupt Latency รวมถึงการจัดการ DMA เพื่อลดโหลดของ CPU ให้เหลือน้อยที่สุด ในหัวข้อ **I2C** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
 
-## 2. 現場のOJT (On-the-Job Training Tip)
-**Senpai says:** Always verify the edge cases. In {topic}, missing a corner case can cost millions in recalls.
+## 2. ทริคหน้างาน OJT (Field Tricks)
+**💡 ข้อคิดจากรุ่นพี่:** เวลาทำ Design Review กับคนญี่ปุ่น ให้เตรียม Data หรือ Waveform จาก Oscilloscope ไปด้วยเสมอ
 
-## 3. 必須日本語 (Essential Japanese for Kenzu)
-* MCU_I2C_Part7解析 (MCU_I2C_Part7 Kaiseki) - MCU_I2C_Part7 Analysis
-* 不具合 (Fuguai) - Defect / Bug
+## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
+* 歩留まり (Budomari) - Yield rate
+* 故障 (Koshou) - การเสีย/ชำรุด
+* 妥当性 (Datousei) - ความสมเหตุสมผล (Validity)
 
-## 4. クイズ (Quiz)
-**Q:** What is the most critical constraint in MCU_I2C_Part7?
-**A:** Ensuring worst-case scenarios are fully simulated and verified.
+## 4. ควิซท้ายบท (Quiz)
+**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ I2C?
+**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ

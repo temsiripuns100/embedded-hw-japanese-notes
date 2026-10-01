@@ -1,18 +1,16 @@
-# Lesson 155: BRAM for High-Speed FIFOs and Clock Domain Crossing (CDC)
+# Advanced Lesson: FPGA - BRAM (Premium)
 
-## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-BRAM ถูกใช้งานอย่างกว้างขวางเพื่อทำเป็น Asynchronous FIFO สำรับการรับส่งข้อมูลข้าม Clock Domain (CDC) ระดับ Senior ต้องระมัดระวังเรื่องของ Pointer Synchronization โดยใช้ Gray Code เพื่อป้องกันการส่งค่า Pointer ที่มีบิตเปลี่ยนพร้อมกันหลายบิต (Multi-bit transition) ข้ามโดเมนนาฬิกา ซึ่งอาจนำไปสู่ Metastability การคำนวณ FIFO Depth ให้เพียงพอต่อ Burst size และ Latency ระหว่างโดเมนก็เป็นเรื่องที่ต้องคำนวณตามหลักคณิตศาสตร์
+## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **BRAM** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
 
-## ทริคหน้างาน OJT (On-the-Job Training Tricks)
-- **Gray Code Counters:** ในการทำ Async FIFO ด้วย BRAM ต้องแปลง Binary pointer เป็น Gray code ก่อนนำข้าม Clock domain โดยใช้ 2-stage (หรือ 3-stage) Synchronizer
-- **Almost Full / Almost Empty Flags:** การคำนวณ Flag เหล่านี้ควรเผื่อ Latency ในฝั่งรับเสมอ มิฉะนั้นอาจเกิด Data Overrun แม้ว่าจะเห็น Flag ช้าไปก็ตาม
+## 2. ทริคหน้างาน OJT (Field Tricks)
+**💡 ข้อคิดจากรุ่นพี่:** ถ้าเจอปัญหาแปลกๆ ให้ลองจับอุณหภูมิดู บางทีเกิดจาก Thermal Runaway
 
-## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図 - Kenzu)
-- 非同期 (Hidouki) - Asynchronous
-- クロック乗せ換え (Kurokku nosekae) - Clock Domain Crossing (CDC)
-- 空/満杯フラグ (Kara / Manpai furagu) - Empty / Full flag
-- メタスタビリティ (Metasutabiriti) - Metastability
+## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
+* 信頼性 (Shinraisei) - ความน่าเชื่อถือ (Reliability)
+* 解析 (Kaiseki) - การวิเคราะห์
+* 手戻り (Temodori) - การทำงานซ้ำ/รื้อทำใหม่
 
-## ควิซท้ายบท (Quiz)
-**คำถาม:** เหตุใดจึงต้องเข้ารหัส Read/Write Pointer เป็น Gray Code ก่อนส่งข้าม Clock Domain ใน Asynchronous FIFO?
-**คำตอบ:** (เฉลย: เพื่อให้ในแต่ละครั้งที่ Pointer มีการนับเพิ่มหรือลด จะมีเพียง 1 บิตเท่านั้นที่เปลี่ยนแปลง ป้องกันปัญหา Metastability จากการอ่านข้อมูลแบบ Multi-bit ที่กำลัง transition)
+## 4. ควิซท้ายบท (Quiz)
+**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ BRAM?
+**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ

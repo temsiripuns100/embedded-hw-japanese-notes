@@ -1,22 +1,16 @@
-# 052: PCB Thermal Management - Part 2: Thermal Vias and Copper Pours
-## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-1. **Thermal Vias (サーマルビア):** คือทางด่วนระบายความร้อนลงสู่ Ground Plane ทฤษฎีระบุว่าค่า Thermal Resistance ($\theta_{via}$) ลดลงตามจำนวน via แต่จะไม่เป็นเส้นตรง (Diminishing returns). หากเจาะ via มากเกินไป จะสูญเสียพื้นที่ Copper pour ซึ่งเป็น Heat Spreader ทำให้ประสิทธิภาพลดลง. กฎทั่วไปคือ วาง via ห่างกันประมาณ 1.0 - 1.2 mm.
-2. **Copper Pours (銅箔ベタ - Douhaku Beta):** การเททองแดงกว้างๆ ทำหน้าที่เหมือน Heat Sink ชั่วคราว. สำหรับความถี่สูง (RF/High-speed) ต้องระวังเรื่อง Parasitic Capacitance แต่สำหรับ Power/Thermal, More is better. ความหนาของทองแดง (1 oz vs 2 oz) มีผลโดยตรงต่อ Thermal Spreading.
+# Advanced Lesson: PCB - Thermal (Premium)
 
-## ทริคหน้างาน OJT (On-the-Job Tricks)
-- **Via Tenting & Plugging:** อย่าวาง Thermal via เปลือยใต้ Thermal Pad ของ IC โดยตรงถ้าไม่ใช่ Via-in-Pad with plating (VIPPO) เพราะตะกั่วจะไหลลงรู (Solder wicking) ทำให้ชิปเอียงหรือบัดกรีไม่ติด (Tombstoning/Voiding). ถ้าทำ VIPPO ไม่ได้ ให้ใช้ Solder Mask tenting หรือแบ่งตะกั่วบัดกรีเป็นช่องๆ (Window pane).
-- **Symmetry (สมมาตร):** การเททองแดงแบบไม่สมมาตร (Top เทเยอะ Bottom ไม่มี) ทำให้บอร์ดโก่ง (Warpage / 弓なり) ตอนผ่านเตาอบ (Reflow).
+## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **Thermal** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
 
-## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図 - Kenzu)
-- **サーマルビア (Saamaru Bia):** Thermal via
-- **熱抵抗 (Netsuteikou):** Thermal resistance
-- **はんだ吸い上がり (Handa Suiagari):** Solder wicking (ตะกั่วถูกดูดลงรู via)
-- **反り (Sori):** Warpage (การโก่งงอของบอร์ด)
+## 2. ทริคหน้างาน OJT (Field Tricks)
+**💡 ข้อคิดจากรุ่นพี่:** ถ้าเจอปัญหาแปลกๆ ให้ลองจับอุณหภูมิดู บางทีเกิดจาก Thermal Runaway
 
-## ควิซท้ายบท (Quiz)
-1. ปัญหาใดที่มักเกิดหากวาง Thermal via ใต้แผ่น Thermal pad ของ IC โดยไม่ทำการปิดรู?
-   a) Parasitic inductance เพิ่ม
-   b) ขาดพื้นที่เททองแดง
-   c) Solder wicking (ตะกั่วไหลลงรู)
-   d) บอร์ดโก่ง
-*(เฉลย: c)*
+## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
+* 仕様書 (Shiyousho) - เอกสาร Spec
+* 評価 (Hyouka) - การประเมิน/ทดสอบ
+* ノイズ (Noizu) - สัญญาณรบกวน
+
+## 4. ควิซท้ายบท (Quiz)
+**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ Thermal?
+**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ

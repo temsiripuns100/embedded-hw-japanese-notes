@@ -1,15 +1,16 @@
-# Advanced Lesson: FPGA_CDC_Part5
+# Advanced Lesson: FPGA - CDC (Premium)
 
-## 1. 専門知識 (Deep Engineering Theory)
-In-depth analysis of FPGA_CDC_Part5. This section covers the advanced architecture, edge cases, and high-level design constraints for mass production.
+## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **CDC** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
 
-## 2. 現場のOJT (On-the-Job Training Tip)
-**Senpai says:** Always verify the edge cases. In {topic}, missing a corner case can cost millions in recalls.
+## 2. ทริคหน้างาน OJT (Field Tricks)
+**💡 ข้อคิดจากรุ่นพี่:** ก่อนส่งแบบไปผลิต ให้เช็ค Gerber ด้วยตัวเองเสมอ อย่าเชื่อแค่ DRC ของโปรแกรม
 
-## 3. 必須日本語 (Essential Japanese for Kenzu)
-* FPGA_CDC_Part5解析 (FPGA_CDC_Part5 Kaiseki) - FPGA_CDC_Part5 Analysis
-* 不具合 (Fuguai) - Defect / Bug
+## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
+* 仕様書 (Shiyousho) - เอกสาร Spec
+* 評価 (Hyouka) - การประเมิน/ทดสอบ
+* ノイズ (Noizu) - สัญญาณรบกวน
 
-## 4. クイズ (Quiz)
-**Q:** What is the most critical constraint in FPGA_CDC_Part5?
-**A:** Ensuring worst-case scenarios are fully simulated and verified.
+## 4. ควิซท้ายบท (Quiz)
+**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ CDC?
+**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ

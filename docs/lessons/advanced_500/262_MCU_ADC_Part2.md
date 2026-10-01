@@ -1,15 +1,16 @@
-# Advanced Lesson: MCU_ADC_Part2
+# Advanced Lesson: MCU - ADC (Premium)
 
-## 1. 専門知識 (Deep Engineering Theory)
-In-depth analysis of MCU_ADC_Part2. This section covers the advanced architecture, edge cases, and high-level design constraints for mass production.
+## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+การออกแบบเฟิร์มแวร์ระดับต่ำ (Bare-metal) หรือ RTOS สำหรับ MCU จำเป็นต้องเข้าใจสถาปัตยกรรม Bus (เช่น AHB/APB) และความหน่วงของ Interrupt Latency รวมถึงการจัดการ DMA เพื่อลดโหลดของ CPU ให้เหลือน้อยที่สุด ในหัวข้อ **ADC** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
 
-## 2. 現場のOJT (On-the-Job Training Tip)
-**Senpai says:** Always verify the edge cases. In {topic}, missing a corner case can cost millions in recalls.
+## 2. ทริคหน้างาน OJT (Field Tricks)
+**💡 ข้อคิดจากรุ่นพี่:** ปัญหา 80% หน้างานเกิดจาก Power Supply และ Grounding ที่ไม่ดี
 
-## 3. 必須日本語 (Essential Japanese for Kenzu)
-* MCU_ADC_Part2解析 (MCU_ADC_Part2 Kaiseki) - MCU_ADC_Part2 Analysis
-* 不具合 (Fuguai) - Defect / Bug
+## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
+* 実装 (Jissou) - การลงอุปกรณ์ (Mounting)
+* 対策 (Taisaku) - การแก้ไขปัญหา/มาตรการ
+* 検図 (Kenzu) - การตรวจแบบ
 
-## 4. クイズ (Quiz)
-**Q:** What is the most critical constraint in MCU_ADC_Part2?
-**A:** Ensuring worst-case scenarios are fully simulated and verified.
+## 4. ควิซท้ายบท (Quiz)
+**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ ADC?
+**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ
