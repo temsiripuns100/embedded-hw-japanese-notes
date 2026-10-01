@@ -1,16 +1,23 @@
-# Advanced Lesson: PCB - Impedance (Premium)
+# Advanced PCB Impedance Part 7: Differential Impedance & Coupling (差動インピーダンスとカップリング)
 
-## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **Impedance** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
+## ทฤษฎีวิศวกรรมเชิงลึก (In-depth Engineering Theory)
+Differential Impedance (Zdiff) ไม่ได้มีค่าเท่ากับ 2 × Z0 (Single-ended) เสมอไป เนื่องจากมี Mutual Capacitance และ Mutual Inductance ระหว่างเส้นสัญญาณบวกและลบ 
+ยิ่งระยะห่าง (Spacing) ระหว่างเส้นลดลง การจับคู่สัญญาณ (Coupling) จะยิ่งสูงขึ้น ทำให้ Zdiff ลดลง การออกแบบที่ยอดเยี่ยมต้องหาจุดสมดุลระหว่าง "Loose coupling" (ระยะห่างกว้าง ควบคุม Impedance ง่าย แต่กินพื้นที่) และ "Tight coupling" (ระยะห่างแคบ ประหยัดพื้นที่ ป้องกัน Noise ได้ดี แต่ถ้า Tolerance โรงงานเพี้ยนเพียง 0.5 mil ค่า Impedance จะหลุดสเปคทันที)
 
-## 2. ทริคหน้างาน OJT (Field Tricks)
-**💡 ข้อคิดจากรุ่นพี่:** เวลาทำ Design Review กับคนญี่ปุ่น ให้เตรียม Data หรือ Waveform จาก Oscilloscope ไปด้วยเสมอ
+## ทริคหน้างาน OJT (On-the-Job Training Tricks)
+- ในพอร์ตความเร็วสูงเช่น USB 3.x หรือ PCIe ระวังการตีวงเลี้ยว (Bending/Corners) การใช้มุม 45 องศา หรือการลบมุมแบบโค้ง (Arc routing) จะช่วยรักษาระยะ Spacing ให้คงที่ได้มากกว่าการหักมุมแบบ 90 องศา 
+- ในกรณีที่ต้องหนีบพินของชิป (Pin escape/Neck down) ที่มีระยะ Pitch แคบ ให้ชดเชยค่า Impedance ที่จุดนั้นด้วยการลดความกว้างของเส้นชั่วคราว เพื่อไม่ให้เกิด Zdiff Drop ที่คอขวด
 
-## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
-* 信頼性 (Shinraisei) - ความน่าเชื่อถือ (Reliability)
-* 解析 (Kaiseki) - การวิเคราะห์
-* 手戻り (Temodori) - การทำงานซ้ำ/รื้อทำใหม่
+## คำศัพท์ภาษาญี่ปุ่นในการตรวจแบบ (検図 - Kenzu)
+- **差動信号 (Sadō shingō):** Differential signal
+- **結合 (Ketsugō):** Coupling
+- **配線間隔 (Haisen kankaku):** Trace spacing / Clearance
+- **曲げ配線 (Mage haisen):** Bending routing / Trace corner
+- **線幅 (Senhaba):** Trace width / Line width
 
-## 4. ควิซท้ายบท (Quiz)
-**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ Impedance?
-**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ
+## ควิซท้ายบท (Quiz)
+**Q:** เมื่อระยะห่าง (Spacing) ระหว่างสายสัญญาณ Differential คู่หนึ่งลดลง (ชิดกันมากขึ้น) จะส่งผลต่อค่า Differential Impedance อย่างไร?
+1. ค่า Differential Impedance เพิ่มขึ้น
+2. ค่า Differential Impedance ลดลง
+3. ค่า Differential Impedance คงที่ เพราะขึ้นกับเส้นกว้างอย่างเดียว
+**Ans:** 2. ค่า Differential Impedance ลดลง (เนื่องจาก Mutual Coupling เพิ่มขึ้น)

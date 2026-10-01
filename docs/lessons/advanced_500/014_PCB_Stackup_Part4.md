@@ -1,16 +1,23 @@
-# Advanced Lesson: PCB - Stackup (Premium)
+# Advanced PCB Stackup Part 4: HDI Stackup & Via Structures (HDIスタックアップとビア構造)
 
-## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **Stackup** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
+## ทฤษฎีวิศวกรรมเชิงลึก (In-depth Engineering Theory)
+High Density Interconnect (HDI) เป็นเทคโนโลยีที่ขาดไม่ได้สำหรับ SoC สมัยใหม่ที่มีพินระดับหลายพัน การเข้าใจ Stackup แบบ N+C+N (เช่น 1+N+1, 2+N+2, 3+N+3) และ Any-Layer HDI เป็นหัวใจสำคัญของ Senior Designer
+ข้อจำกัดทางวิศวกรรมของ Microvia คือ "Aspect Ratio" (อัตราส่วนระหว่างความลึกต่อเส้นผ่านศูนย์กลาง) ซึ่งปกติไม่ควรเกิน 0.8:1 ถึง 1:1 การออกแบบ Stacked Microvia (ビア・オン・ビア) มีความเสี่ยงในการเกิด Microvia Reliability failure มากกว่า Staggered Microvia ในสภาวะ Thermal Cycling เนื่องจากความเค้นที่สะสมบริเวณรอยต่อของแผ่นทองแดง (Target Pad)
 
-## 2. ทริคหน้างาน OJT (Field Tricks)
-**💡 ข้อคิดจากรุ่นพี่:** การใช้ Probe วัดสัญญาณ High-speed ต้องใช้สายกราวด์สั้นที่สุด (Spring ground) ไม่งั้นจะเห็น Ringing ปลอม
+## ทริคหน้างาน OJT (On-the-Job Training Tricks)
+- การออกแบบให้เป็น Staggered Microvia ปลอดภัยต่อเรื่อง DFM (Design for Manufacturing) และความน่าเชื่อถือระยะยาว มากกว่า Stacked Microvia หากเลี่ยง Stacked Microvia ไม่ได้ ให้กำหนดให้มีการทำ Copper Plated Shut (อุดรูด้วยทองแดงเต็ม) เสมอ
+- ระวังปัญหา "Z-axis Expansion" ที่ดันให้ Microvia ขาด (Open circuit) เวลาผ่านตู้อบ Reflow หลายรอบ แนะนำให้สอบถาม Vendor เกี่ยวกับค่า Tg (Glass Transition Temperature) และ Td (Decomposition Temperature) ของวัสดุ
 
-## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
-* 実装 (Jissou) - การลงอุปกรณ์ (Mounting)
-* 対策 (Taisaku) - การแก้ไขปัญหา/มาตรการ
-* 検図 (Kenzu) - การตรวจแบบ
+## คำศัพท์ภาษาญี่ปุ่นในการตรวจแบบ (検図 - Kenzu)
+- **ビルドアップ (Birudo appu):** Build-up (HDI process)
+- **ブラインドビア (Buraindo bia):** Blind via
+- **ベリードビア (Berīdo bia):** Buried via
+- **スタガービア (Sutagā bia):** Staggered via - บิดเยื้องกัน
+- **スタックビア (Sutakku bia):** Stacked via - วางซ้อนกันตรงๆ
 
-## 4. ควิซท้ายบท (Quiz)
-**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ Stackup?
-**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ
+## ควิซท้ายบท (Quiz)
+**Q:** สาเหตุหลักที่ IPC และผู้เชี่ยวชาญหลายแห่งแนะนำให้ใช้ Staggered Microvia มากกว่า Stacked Microvia คืออะไร?
+1. ลดค่าใช้จ่ายในการเจาะด้วยเลเซอร์
+2. ลดปัญหาทางความน่าเชื่อถือ (Reliability) จากความเค้นช่วงขยายตัวทางความร้อน
+3. ช่วยลด Signal crosstalk ได้ดีกว่า
+**Ans:** 2. ลดปัญหาทางความน่าเชื่อถือ (Reliability) จากความเค้นช่วงขยายตัวทางความร้อน
