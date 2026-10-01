@@ -1,16 +1,16 @@
-# Advanced Lesson: PCB - Vias (Premium)
+# Lesson 047: PCB Vias Part 7 - Via Stub Effect and Backdrilling
 
-## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **Vias** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
+## ทฤษฎีวิศวกรรมเชิงลึก (Senior Engineer Level)
+Via Stub คือส่วนของ Via ที่ยื่นเกินจาก Layer ที่สัญญาณใช้งานจริง ทำตัวเหมือน Open-ended transmission line เกิดการสะท้อนกลับของสัญญาณ (Reflection) และสร้าง Quarter-wave resonance ซึ่งทำให้เกิด Signal Attenuation อย่างรุนแรงที่ความถี่เฉพาะ (Resonant frequency) การแก้ปัญหาคือใช้เทคนิค Backdrilling (การเจาะคว้าน) เอาเนื้อทองแดงส่วน Stub ทิ้ง หรือใช้ Blind/Buried Vias แทน
 
-## 2. ทริคหน้างาน OJT (Field Tricks)
-**💡 ข้อคิดจากรุ่นพี่:** การใช้ Probe วัดสัญญาณ High-speed ต้องใช้สายกราวด์สั้นที่สุด (Spring ground) ไม่งั้นจะเห็น Ringing ปลอม
+## ทริคหน้างาน OJT
+เวลาสั่งทำ Backdrill อย่าลืมเช็ค Clearance จากรู Backdrill ไปยัง Trace ข้างเคียงด้วย เพราะดอกสว่าน Backdrill จะใหญ่กว่ารู Via ปกติประมาณ 6-8 mils เสมอ พลาดตรงนี้ short แน่นอน
 
-## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
-* 仕様書 (Shiyousho) - เอกสาร Spec
-* 評価 (Hyouka) - การประเมิน/ทดสอบ
-* ノイズ (Noizu) - สัญญาณรบกวน
+## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図)
+- **スタブ (Sutabu):** Stub (ส่วนปลายที่เหลืออยู่)
+- **バックドリル (Bakku-doriru):** Backdrilling
+- **共振 (Kyoushin):** Resonance
 
-## 4. ควิซท้ายบท (Quiz)
-**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ Vias?
-**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ
+## ควิซท้ายบท
+Q: เหตุใดจึงต้องทำ Backdrilling ในบอร์ด High-speed?
+A: เพื่อลด Via Stub ซึ่งทำให้เกิด Signal Resonance และ Reflection

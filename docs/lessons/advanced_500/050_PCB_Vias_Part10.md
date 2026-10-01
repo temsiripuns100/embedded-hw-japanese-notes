@@ -1,16 +1,16 @@
-# Advanced Lesson: PCB - Vias (Premium)
+# Lesson 050: PCB Vias Part 10 - Via Reliability and Thermal Cycling
 
-## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **Vias** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
+## ทฤษฎีวิศวกรรมเชิงลึก (Senior Engineer Level)
+Via ต้องทนต่อความเค้นทางความร้อน (Thermal Stress) จากกระบวนการประกอบ (Reflow, Wave soldering) และสภาพแวดล้อม (Thermal Cycling) ค่า CTE (Coefficient of Thermal Expansion) ของ Z-axis ของ FR4 สูงกว่าทองแดงมาก ทำให้เมื่อร้อน FR4 จะยืดตัวดึงผนังรู Via (Barrel) จนอาจเกิด Barrel Crack หรือ Corner Crack ระหว่าง Pad กับ Barrel การใช้ Copper plating ที่หนาขึ้น หรือวัสดุ High-Tg สามารถบรรเทาปัญหานี้ได้
 
-## 2. ทริคหน้างาน OJT (Field Tricks)
-**💡 ข้อคิดจากรุ่นพี่:** ถ้าเจอปัญหาแปลกๆ ให้ลองจับอุณหภูมิดู บางทีเกิดจาก Thermal Runaway
+## ทริคหน้างาน OJT
+ในการวิเคราะห์ Failure Analysis (FA) หากเจอ Open circuit ที่อุณหภูมิสูงแต่ปกติตอนอุณหภูมิห้อง ให้สงสัย Barrel crack ก่อนเลย ต้องนำไปทำ Cross-section ดูรอยร้าว
 
-## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
-* 仕様書 (Shiyousho) - เอกสาร Spec
-* 評価 (Hyouka) - การประเมิน/ทดสอบ
-* ノイズ (Noizu) - สัญญาณรบกวน
+## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図)
+- **熱膨張係数 (Netsubouchou Keisuu):** CTE (Coefficient of Thermal Expansion)
+- **バレルクラック (Bareru Kurakku):** Barrel Crack
+- **断面観察 (Danmen Kansatsu):** Cross-section observation
 
-## 4. ควิซท้ายบท (Quiz)
-**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ Vias?
-**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ
+## ควิซท้ายบท
+Q: กลไกใดทำให้เกิด Barrel Crack ใน Via?
+A: ความแตกต่างของอัตราการขยายตัวทางความร้อน (CTE) ระหว่างเนื้อ FR4 (Z-axis) กับทองแดงเคลือบรู

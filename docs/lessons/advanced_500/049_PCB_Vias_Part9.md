@@ -1,16 +1,16 @@
-# Advanced Lesson: PCB - Vias (Premium)
+# Lesson 049: PCB Vias Part 9 - Via in Pad (VIP) and Microvias (HDI)
 
-## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **Vias** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
+## ทฤษฎีวิศวกรรมเชิงลึก (Senior Engineer Level)
+เทคโนโลยี HDI (High-Density Interconnect) บังคับให้ใช้ Via in Pad เพื่อลด Inductance และประหยัดพื้นที่ โดยใช้ Microvia เจาะด้วยเลเซอร์ (Laser drilled) ขนาดเล็ก การทำ VIP ต้องมีกระบวนการ Via Filling (Plated Over Filled Via - POFV) ไม่เช่นนั้น Solder paste จะไหลลงไปในรูระหว่าง Reflow ทำให้จุดบัดกรีขาดตะกั่ว (Solder wicking) เกิด Void หรือเปิดวงจร
 
-## 2. ทริคหน้างาน OJT (Field Tricks)
-**💡 ข้อคิดจากรุ่นพี่:** ก่อนส่งแบบไปผลิต ให้เช็ค Gerber ด้วยตัวเองเสมอ อย่าเชื่อแค่ DRC ของโปรแกรม
+## ทริคหน้างาน OJT
+ถ้าใช้ VIP บน BGA Pad ห้ามลืมระบุใน Fab Note ว่า "Via in Pad Plated Over (VIPPO) with Epoxy Fill" ไม่งั้นโรงงานอาจจะแค่ Tenting ซึ่งพังแน่นอนตอนประกอบ
 
-## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
-* 実装 (Jissou) - การลงอุปกรณ์ (Mounting)
-* 対策 (Taisaku) - การแก้ไขปัญหา/มาตรการ
-* 検図 (Kenzu) - การตรวจแบบ
+## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図)
+- **パッドオンビア (Paddo-on-bia):** Via in Pad
+- **樹脂埋め (Jushi Ume):** Resin Filling / Epoxy Fill
+- **はんだ吸い込み (Handa Suikomi):** Solder Wicking (ตะกั่วไหลลงรู)
 
-## 4. ควิซท้ายบท (Quiz)
-**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ Vias?
-**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ
+## ควิซท้ายบท
+Q: ปัญหาหลักหากทำ Via in Pad โดยไม่ทำ Epoxy Fill คืออะไร?
+A: Solder wicking ทำให้ปริมาณตะกั่วที่ pad ไม่พอ เกิดการบัดกรีที่ไม่สมบูรณ์

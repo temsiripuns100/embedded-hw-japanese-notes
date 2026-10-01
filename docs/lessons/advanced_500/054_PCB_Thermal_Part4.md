@@ -1,16 +1,16 @@
-# Advanced Lesson: PCB - Thermal (Premium)
+# Lesson 054: PCB Thermal Part 4 - Metal Core PCB (MCPCB) and High Power
 
-## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **Thermal** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
+## ทฤษฎีวิศวกรรมเชิงลึก (Senior Engineer Level)
+Metal Core PCB (MCPCB) ประกอบด้วยชั้นโลหะฐาน (มักเป็นอลูมิเนียม หรือทองแดง), ชั้น Dielectric ที่มีการนำความร้อนสูง (Thermal Dielectric), และชั้นวงจรทองแดง MCPCB เหนือกว่า FR4 ในแง่การระบายความร้อน (Dielectric มีค่า K = 1-8 W/mK) มักใช้ในงาน High Power LED, Automotive Electronics, และ Power Converter สิ่งที่ต้องระวังคือ Dielectric Breakdown Voltage เพราะฉนวนบางมาก
 
-## 2. ทริคหน้างาน OJT (Field Tricks)
-**💡 ข้อคิดจากรุ่นพี่:** เวลาทำ Design Review กับคนญี่ปุ่น ให้เตรียม Data หรือ Waveform จาก Oscilloscope ไปด้วยเสมอ
+## ทริคหน้างาน OJT
+MCPCB ทำ Vias ข้ามชั้นยากมากและแพง มักออกแบบเป็น 1-Layer เท่านั้น ถ้าต้องเดินข้ามเส้นจริงๆ แนะนำให้ใช้ Jumper (0-ohm resistor) บนบอร์ดช่วยลดต้นทุน
 
-## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
-* 歩留まり (Budomari) - Yield rate
-* 故障 (Koshou) - การเสีย/ชำรุด
-* 妥当性 (Datousei) - ความสมเหตุสมผล (Validity)
+## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図)
+- **アルミ基板 (Arumi Kiban):** Aluminum Substrate Board (MCPCB)
+- **絶縁層 (Zetsuen Sou):** Dielectric / Insulation Layer
+- **耐電圧 (Taiden'atsu):** Withstand Voltage / Breakdown Voltage
 
-## 4. ควิซท้ายบท (Quiz)
-**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ Thermal?
-**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ
+## ควิซท้ายบท
+Q: ข้อจำกัดที่สำคัญอย่างหนึ่งของการใช้ MCPCB 1-layer คืออะไร?
+A: ไม่สามารถมี Via เพื่อลากวงจรข้ามไปด้านล่างได้ ต้องเดินลายวงจรในระนาบเดียวหรือใช้ Jumper

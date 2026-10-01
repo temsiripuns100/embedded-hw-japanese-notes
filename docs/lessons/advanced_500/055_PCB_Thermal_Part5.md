@@ -1,16 +1,16 @@
-# Advanced Lesson: PCB - Thermal (Premium)
+# Lesson 055: PCB Thermal Part 5 - Thermal Simulation and Testing (Thermography)
 
-## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **Thermal** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
+## ทฤษฎีวิศวกรรมเชิงลึก (Senior Engineer Level)
+Thermal Simulation (เช่น Flotherm, Icepak) ใช้แก้สมการ CFD ควบคู่กับความร้อน ช่วยทำนายจุด Hotspot ล่วงหน้าก่อนสร้างบอร์ดจริง ส่วนการทดสอบจริงมักใช้ Thermal Camera (IR Camera) หรือ Thermocouple จุดระวังในการใช้ IR Camera คือค่า Emissivity (ε) ของพื้นผิว PCB มักไม่เท่ากัน (Silkscreen, Bare Copper, Solder Mask, ชิปพลาสติก) หากไม่ทาสีดำทับ (Black paint coating) ค่าอุณหภูมิที่วัดได้จะผิดเพี้ยนไปหลายองศา
 
-## 2. ทริคหน้างาน OJT (Field Tricks)
-**💡 ข้อคิดจากรุ่นพี่:** เวลาทำ Design Review กับคนญี่ปุ่น ให้เตรียม Data หรือ Waveform จาก Oscilloscope ไปด้วยเสมอ
+## ทริคหน้างาน OJT
+ก่อนถ่ายภาพความร้อนจาก IR Camera วิศวกรเก๋าๆ จะเอาสเปรย์สีดำด้าน (Matte Black) หรือใช้ Kapton Tape แปะทับบริเวณที่จะวัด เพื่อปรับ Emissivity ให้ใกล้เคียง 0.95 คงที่ทั้งบอร์ด
 
-## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
-* 信頼性 (Shinraisei) - ความน่าเชื่อถือ (Reliability)
-* 解析 (Kaiseki) - การวิเคราะห์
-* 手戻り (Temodori) - การทำงานซ้ำ/รื้อทำใหม่
+## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図)
+- **熱解析 (Netsu Kaiseki):** Thermal Analysis / Simulation
+- **放射率 (Housha Ritsu):** Emissivity
+- **熱電対 (Netsudentai):** Thermocouple
 
-## 4. ควิซท้ายบท (Quiz)
-**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ Thermal?
-**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ
+## ควิซท้ายบท
+Q: เหตุใดจึงต้องพ่นสีดำด้านบนบอร์ดก่อนใช้ Thermal Camera วัดอุณหภูมิที่แม่นยำ?
+A: เพื่อปรับค่า Emissivity ของพื้นผิววัสดุที่แตกต่างกันให้เท่ากัน ป้องกันความคลาดเคลื่อนในการวัด
