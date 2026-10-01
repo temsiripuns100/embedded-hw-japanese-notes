@@ -1,31 +1,29 @@
-# Advanced PCB Stackup - Part 5: Stackup Design Review (Kenzu) & Manufacturing Tolerances
+# Advanced PCB Stackup - Part 5: Design for Manufacturability (DFM) & Cost vs Yield (Senior Level)
 
 ## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-ในโลกความจริง (Real-world manufacturing) ความหนาของแผ่น Dielectric ไม่เป๊ะ 100% มีค่า Tolerance อยู่ประมาณ ±10% นอกจากนี้ Dk ของวัสดุก็แปรผันตามความถี่ (Frequency-dependent) 
-การออกแบบ Stackup ที่ทนทาน (Robust) ต้องพิจารณาสิ่งเหล่านี้ตั้งแต่แรก
-- **Symmetrical Stackup:** โครงสร้างของ PCB ควรสมมาตรรอบแกนกลาง ทั้งในเรื่องของความหนาชั้น, ชนิดวัสดุ, และสัดส่วนทองแดง (Copper distribution) หากไม่สมมาตร บอร์ดจะบิดงอหรือโก่งตัว (Bow and Twist / 反り) เมื่อผ่านเตา Reflow
-- **Impedance Tolerance:** โดยทั่วไปเราขอ Impedance control ที่ ±10% แต่ถ้าต้องการความแม่นยำมากสามารถคุยกับโรงงานขอ ±5% ได้ (ราคาแพงขึ้น) ซึ่งผู้ผลิตอาจต้องปรับเปลี่ยน Stackup เล็กน้อย (Fab-adjusted stackup)
+ในมุมมองของ Senior Engineer การออกแบบ Stackup ที่ดีเลิศแต่ผลิตไม่ได้ หรือ Yield ต่ำ คือความล้มเหลว
+- **Symmetrical Stackup:** โครงสร้างของ PCB ควรจะสมมาตร (Symmetrical) รอบจุดศูนย์กลางแกน Z เสมอ ทั้งชนิดของวัสดุ (Core/Prepreg), ความหนา, และปริมาณทองแดง (Copper weight) หาก Stackup ไม่สมมาตร เมื่อผ่านเตาอบ (Reflow) ที่อุณหภูมิสูง จะเกิดแรงเค้น (Thermal stress) ทำให้บอร์ดโก่ง (Bow and Twist) ซึ่งมีผลทำให้ SMT เครื่องจักรวางอุปกรณ์ผิดพลาด
+- **Sequential Build-Up (SBU):** เทคโนโลยี HDI (High Density Interconnect) ที่ใช้ Microvia จะต้องผ่านการอัด (Lamination) หลายรอบ (เช่น 2-N-2 หมายถึงอัด Core กลาง 1 รอบ แล้วเพิ่ม Layer นอกอัดอีก 2 รอบ) ยิ่งอัดหลายรอบ ราคาจะก้าวกระโดดแบบทวีคูณ และเกิดความเสี่ยงเรื่อง Misregistration
 
-## 2. ทริคหน้างาน OJT (On-the-Job Training Tricks)
-- **อย่าดื้อรั้นกับ Fab House:** บ่อยครั้งเราสร้าง Stackup คำนวณสวยงามบนโปรแกรม (เช่น Polar Instruments) แล้วส่งไป แต่ Fab บอกว่า "เราไม่มี Prepreg รุ่นนี้ในสต็อก ขอเปลี่ยนเป็นรุ่นเทียบเท่า" เราต้องเปิดใจตรวจสอบ Dk/Df ใหม่ แล้วยอมให้เขาปรับ Line width เล็กน้อยเพื่อให้ Impedance ตรง เพราะการรอสั่งวัสดุใหม่จะทำให้ Lead time นานมาก
-- **การทำ Kenzu Checklist สำหรับ Stackup:** 
-  1. บอร์ดสมมาตรหรือไม่?
-  2. Impedance calculation ตรงกันกับตารางในหน้าแรก (Fab note) หรือไม่?
-  3. Copper weight ในชั้นในและนอกเหมาะสมกับการรับกระแส (Current ampacity) หรือไม่?
-  4. Core/Prepreg สลับกันถูกต้องตามลำดับการอัด (Pressing cycle) หรือไม่?
+## 2. ทริคหน้างาน OJT (Field Tricks)
+- **OJT Trick 1:** หลีกเลี่ยงการใช้ Prepreg ชนิดที่มี Resin ต่ำหรือบางเกินไป อัดระหว่างชั้นที่มีลายทองแดงหนาๆ หรือมีพื้นที่ว่างมาก (Resin starvation) เพราะ Resin จะไหลไปเติมเต็มช่องว่างไม่พอ เกิดเป็นฟองอากาศ (Delamination) แนะนำให้ปรึกษา Field Application Engineer (FAE) ของโรงงานผู้ผลิตแผ่นเพื่อคำนวณ Resin volume
+- **OJT Trick 2:** ถ้าไม่จำเป็นจริงๆ อย่าใช้ Stack-via (เจาะ Microvia ทับกันตรงๆ บนแกนเดียวกัน) โรงงานเกลียดมากเพราะทำยากและหลุดร่อนง่าย ให้พยายามใช้ Staggered-via (เจาะเหลื่อมกัน) จะผลิตง่ายกว่าและ Yield สูงกว่า
 
 ## 3. คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図 - Kenzu)
-- **反り (Sori):** Bow and Twist / Warpage / การโก่งงอของบอร์ด
-- **対称性 (Taishousei):** Symmetry / ความสมมาตรของโครงสร้าง
-- **公差 (Kousa):** Tolerance / ค่าความเผื่อ (เช่น ±10%)
-- **面付け (Mentsuke):** Panelization / การจัดเรียงบอร์ดลงบนแผงผลิต
-- **製造元 (Seizou-moto) / 基板屋 (Kiban-ya):** Fab house / ผู้ผลิตแผ่นปริ้นท์
+- **対称性 (Taishōsei):** Symmetry (ความสมมาตร)
+- **反り / ねじれ (Sori / Nejire):** Bow and Twist (การโก่งและบิดตัวของบอร์ด)
+- **製造性考慮設計 (Seizōsei kōryo sekkei):** Design for Manufacturability (DFM)
+- **歩留まり (Budomari):** Yield (อัตราของเสีย/ดี ในการผลิต)
+- **層間剥離 (Sōkan hakuri):** Delamination
+- **スタックビア / スタガードビア (Sutakku bia / Sutagādo bia):** Stacked via / Staggered via
+
+**ตัวอย่างประโยคตรวจแบบ:**
+"層構成がZ軸に対して非対称になっています。リフロー時に基板の反り（Bow and Twist）が発生する恐れがあるので、対称な構成に見直してください。" 
+(โครงสร้างชั้นไม่สมมาตรเทียบกับแกน Z อาจทำให้เกิดบอร์ดโก่งตัวระหว่างการทำ Reflow ได้ กรุณาทบทวนให้เป็นโครงสร้างสมมาตรครับ)
 
 ## 4. ควิซท้ายบท (Quiz)
-**คำถาม:** หาก Stackup ของบอร์ด (เช่น ชั้นทองแดงและความหนา Dielectric) ออกแบบมาไม่สมมาตร ปัญหาใหญ่ที่สุดที่มักพบในกระบวนการประกอบ (Assembly) คืออะไร?
-1. บอร์ดจะน้ำหนักเกิน
-2. Impedance จะผิดเพี้ยนไปหมด
-3. บอร์ดจะเกิดการบิดงอหรือโก่ง (Warpage) เมื่อโดนความร้อนในเตา Reflow
-4. ผู้ผลิตเจาะรูไม่ได้
-
-*เฉลย: 3*
+**Q1:** โครงสร้าง HDI แบบ 1-N-1 เทียบกับ 2-N-2 ข้อใดมีความเสี่ยงในการเกิด Misregistration (การเหลื่อมกันของชั้น) มากกว่ากัน และเพราะเหตุใด?
+A) 1-N-1 เสี่ยงกว่า เพราะแผ่นบางกว่า
+B) 2-N-2 เสี่ยงกว่า เพราะต้องผ่านกระบวนการ Lamination (การอัด) มากครั้งกว่า
+C) ทั้งสองแบบมีความเสี่ยงเท่ากัน หากใช้เครื่องจักรเดียวกัน
+*(เฉลย: B) 2-N-2 ต้องทำ Lamination cycles มากกว่า ทุกครั้งที่มีการอัดความร้อน วัสดุจะมีการยืดหดตัว ทำให้ความคลาดเคลื่อนสะสม (Cumulative tolerance) เพิ่มขึ้น)*
