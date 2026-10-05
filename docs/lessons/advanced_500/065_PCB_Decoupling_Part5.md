@@ -1,45 +1,325 @@
-# Lesson 065: PCB Decoupling Part 5 - S-Parameters, PI Simulation & Design Review (Sパラメータ、PIシミュレーションと検図)
+# Lesson 065: PCB Decoupling Part 5 - S-Parameters, 2-Port VNA Measurement, and PI Simulation Sign-Off
+
+---
 
 ## 1. ทฤษฎีวิศวกรรมเชิงลึก (高度なエンジニアリング理論)
 
-ในการตรวจสอบประสิทธิภาพของ PDN ขั้นสูง เราไม่สามารถพึ่งพาสมการอย่างง่ายได้อีกต่อไป แต่ต้องอาศัยการจำลอง (Simulation) ทางแม่เหล็กไฟฟ้า (EM Simulation) และการใช้งาน **S-Parameters** (Scattering Parameters)
+ในการตรวจสอบและตรวจรับแบบโครงข่ายจ่ายไฟ (PDN Design Review & Sign-Off) สำหรับฮาร์ดแวร์ระดับไฮเอนด์และยานยนต์ การคำนวณด้วยสมการอย่างง่าย (Lumped Approximations) ไม่สามารถทำนายพฤติกรรมของคลื่นแม่เหล็กไฟฟ้าบนระนาบทองแดงขนาดใหญ่ได้อีกต่อไป วิศวกร Power Integrity (PI) ต้องอาศัยเครื่องมือจำลองสนามแม่เหล็กไฟฟ้า (Electromagnetic Simulation: EM Sim) ควบคู่กับ **เมทริกซ์พารามิเตอร์การกระเจิง (Scattering Parameters: S-Parameters)** และการวัดยืนยันผลจริงด้วยเครื่อง **Vector Network Analyzer (VNA)**
 
-สำหรับ PDN การประเมินมักใช้ $S_{11}$ (Reflection Coefficient) เพื่อดู Impedance และ $S_{21}$ (Transmission Coefficient) เพื่อดู Power Plane Transfer Impedance หรือ Coupling ระหว่างพอร์ต
+```
++-------------------------------------------------------------------------+
+|                  2-Port Shunt-Thru Measurement Setup                    |
+|                                                                         |
+|        Port 1 (50 Ohm)                     Port 2 (50 Ohm)              |
+|   ───────► V_inc ───────┐               ┌───────► V_trans ───────►      |
+|                         │               │                               |
+|                  ┌──────┴───────────────┴──────┐                        |
+|                  │      DUT: Low-Z PDN         │                        |
+|                  │    (|Z_DUT| ~ 0.5 - 10 mΩ)  │                        |
+|                  └──────────────┬──────────────┘                        |
+|                                 │                                       |
+|   ──────────────────────────────┴───────────────────────────────►       |
+|                            Common Ground                                |
+|                                                                         |
+|   Fundamental Formula:  Z_DUT = (Z_0 / 2) * [ S_21 / (1 - S_21) ]       |
++-------------------------------------------------------------------------+
+```
 
-สมการความสัมพันธ์ระหว่าง $S_{11}$ (กรณี 1-Port) และ Impedance ($Z_{PDN}$) คือ:
-$$ Z_{PDN} = Z_0 \cdot \frac{1 + S_{11}}{1 - S_{11}} $$
-โดยที่ $Z_0$ มักจะถูก Set ให้ต่ำพิเศษในเครื่องมือวัด PDN (เช่น $0.1 \Omega$ หรือต่ำกว่า) ไม่ใช่ $50 \Omega$ ปกติ
+### 1.1 คณิตศาสตร์ของการวัดอิมพีแดนซ์ระดับมิลลิโอห์ม (The Physics of 2-Port Shunt-Thru)
 
-กราฟ Impedance vs Frequency ที่ได้จาก Simulation (หรือวัดจริงด้วย VNA - Vector Network Analyzer) ต้องไม่เกิน $Z_{target}$ ตลอดช่วงความถี่ หากพบ Peak เราสามารถดึง S-Parameter กลับมาวิเคราะห์สาเหตุ (Post-processing) ได้
+เหตุใดจึง **ห้ามใช้การวัดแบบ 1-Port ($S_{11}$)** ในการวัดอิมพีแดนซ์ของ PDN?
+จากความสัมพันธ์ของการสะท้อนคลื่น 1-Port:
 
-## 2. ทริคหน้างาน OJT แบบ Step-by-step (現場の実践テクニック)
-กระบวนการ PI Simulation และการตรวจแบบ (Design Review / 検図)
+$$S_{11} = \frac{Z_{DUT} - Z_0}{Z_{DUT} + Z_0}$$
 
-**Step-by-step สำหรับ 検図 (Ken-zu):**
-1. **Extraction**: ดึงข้อมูล Layout จากเครื่องมือ ECAD (เช่น Allegro, Xpedition) เข้าสู่โปรแกรม SI/PI (เช่น HyperLynx, SIwave)
-2. **Setup Component Models**: ใส่ RLC, SPICE หรือ Touchstone Models (S-Parameters) ให้กับตัวเก็บประจุทุกตัว 
-3. **VRM Modeling**: กำหนด VRM (Voltage Regulator Module) เป็นแหล่งจ่ายไฟ พร้อมค่า R_out และ L_out ของตัว Regulator
-4. **Run AC Sweep Simulation**: รันหา Profile ของ $Z_{PDN}$ 
-5. **Report & Review**: นำกราฟ Z-Profile ไปเปรียบเทียบกับ $Z_{target}$ ที่คำนวณไว้ใน Part 1 หากพบว่า Pass ก็เซ็นอนุมัติ (承認: Shounin) 
+เมื่อต้องการวัดอิมพีแดนซ์ PDN ระดับมิลลิโอห์ม เช่น $Z_{DUT} = 1.0\text{ m}\Omega$ บนระบบ VNA มาตรฐาน $Z_0 = 50\ \Omega$:
+$$S_{11} = \frac{0.001 - 50}{0.001 + 50} = \frac{-49.999}{50.001} \approx -0.99996$$
 
-## 3. คำศัพท์ญี่ปุ่นเชิงเทคนิคสำหรับการตรวจแบบ (検図用語)
+ค่า $S_{11}$ มีขนาดใกล้เคียงกับ $-1.00000$ (Full Reflection) อย่างยิ่ง ความละเอียดของภาคแปลงสัญญาณดิจิทัล (ADC) ของ VNA จะเกิดความคลาดเคลื่อนเชิงตัวเลข (Quantization & Directivity Error) ทำให้ไม่สามารถแยกแยะความแตกต่างระหว่าง $1.0\text{ m}\Omega$ กับ $0.0\text{ m}\Omega$ หรือ $10\text{ m}\Omega$ ได้เลย!
 
-- **Sパラメータ (S paramiita)**: S-Parameters
-- **電磁界シミュレーション (Denjikai shimyureeshon)**: Electromagnetic Simulation (EM Sim)
-- **ネットワークアナライザ (Nettowaaku anaraiza)**: Vector Network Analyzer (VNA)
-- **反射係数 (Hansha keisuu)**: Reflection Coefficient ($S_{11}$)
-- **検図 (Kenzu)**: Design Review / Checking the drawing
-- **承認 (Shounin)**: Approval
+#### ทฤษฎี 2-Port Shunt-Thru (Novak / Keysight Method)
+เพื่อแก้ปัญหานี้ อุตสาหกรรมจึงใช้เทคนิค **2-Port Shunt-Thru**:
+- ส่งสัญญาณความถี่กวาดออกจาก Port 1 ($Z_0 = 50\ \Omega$) ผ่านอุปกรณ์เป้าหมาย (DUT) ที่ต่อขนานลงกราวด์ และวัดสัญญาณทะลุผ่านที่เข้าสู่ Port 2 ($Z_0 = 50\ \Omega$)
+- โดยการวิเคราะห์เมทริกซ์การส่งผ่าน (Transmission ABCD Matrix):
+  $$\begin{bmatrix} A & B \\ C & D \end{bmatrix} = \begin{bmatrix} 1 & 0 \\ \frac{1}{Z_{DUT}} & 1 \end{bmatrix}$$
+- แปลงเป็นพารามิเตอร์การส่งผ่าน $S_{21}$:
+  $$S_{21} = \frac{2}{A + \frac{B}{Z_0} + C \cdot Z_0 + D} = \frac{2}{1 + 0 + \frac{Z_0}{Z_{DUT}} + 1} = \frac{2}{2 + \frac{Z_0}{Z_{DUT}}} = \frac{2 Z_{DUT}}{2 Z_{DUT} + Z_0}$$
 
-## 4. ควิซวิเคราะห์ปัญหาระดับยาก (高度な問題分析クイズ)
+จัดรูปสมการเพื่อหาค่าอิมพีแดนซ์ของ PDN ($Z_{DUT}$):
 
-**คำถาม (問題):**
-ในการวัด PDN Impedance ด้วย VNA 2-Port (Shunt-Through Measurement Technique) พบว่ากราฟ Impedance ที่ได้จากเครื่องวัดต่ำมากจนติดลบในบางย่านความถี่ ทั้งที่ใน Simulation เป็นบวก สาเหตุทาง Measurement Setup ที่พบบ่อยที่สุดที่ทำให้เกิดข้อผิดพลาดนี้คืออะไร และทำไมต้องใช้เทคนิค 2-Port แทน 1-Port สำหรับการวัดระดับมิลลิโอห์ม?
+$$Z_{DUT} = \frac{Z_0}{2} \cdot \frac{S_{21}}{1 - S_{21}}$$
 
-**เฉลยและคำอธิบาย (解答と解説):**
-ปัญหาเกิดจาก **Ground Loop Error** และความผิดพลาดจากการทำ **Calibration** ไม่สมบูรณ์
-สาเหตุที่ต้องใช้ **2-Port Shunt-Through Measurement** แทน 1-Port:
-การวัดค่า Impedance ที่ต่ำมากระดับมิลลิโอห์ม (เช่น $10 m\Omega$) หากใช้ 1-Port ความต้านทานและ Inductance ของสายเคเบิล (Cable Parasitics) และ Probe จะกลบค่าที่แท้จริงของ PDN ไปหมด
-ในระบบ 2-Port, Port 1 จะฉีดสัญญาณ (Stimulus) และ Port 2 จะรับสัญญาณ (Response) ทำให้สามารถหักล้าง Cable/Probe Errors ได้ดีกว่า
-อาการ Impedance "ติดลบ" หรือผิดเพี้ยนรุนแรง มักเกิดจาก Ground Loop Shield ระหว่าง Port 1 และ Port 2 (Transfer Impedance ของสายชิลด์)
-**วิธีแก้:** ต้องใช้ Isolation Transformer หรือ Common Mode Choke ติดที่สายเคเบิลเพื่อทำลาย Ground Loop และต้องทำ 2-Port Calibration (SOLT) ให้สมบูรณ์แบบก่อนวัด
+ในย่านที่อิมพีแดนซ์ต่ำมาก ($|Z_{DUT}| \ll Z_0 \implies |S_{21}| \ll 1$):
+
+$$Z_{DUT} \approx \frac{Z_0}{2} \cdot S_{21} = 25 \cdot S_{21} \quad [\Omega]$$
+
+**ตัวอย่าง:** หากวัดค่า $S_{21} = -80\text{ dB} = 10^{-4}$:
+$$Z_{DUT} \approx 25 \times 10^{-4}\ \Omega = 2.5\text{ m}\Omega$$
+เทคนิคนี้เปลี่ยนสัญญาณรบกวนการสะท้อน ให้กลายเป็นการวัดอัตราการลดทอนสัญญาณส่งผ่าน ซึ่งมีช่วงการวัดพลวัต (Dynamic Range) กว้างกว่า $100\text{ dB}$ ทำให้สามารถวัดอิมพีแดนซ์ได้ละเอียดถึงระดับ **ไมโครโอห์ม ($100\ \mu\Omega$)** อย่างแม่นยำ
+
+### 1.2 ปัญหา Ground Loop Error และการใช้ Coaxial Balun / Ferrite Choke
+
+ในการวัด 2-Port บนบอร์ดจริง ปลอกชีลด์ภายนอกของสายโคแอกเชียลทั้งสองเส้น (Cable Braid Shields) จะเชื่อมต่อถึงกันผ่านระนาบกราวด์ของบอร์ด และเชื่อมถึงกันอีกครั้งผ่านโครงเครื่อง VNA (Chassis Ground) ก่อให้เกิด **ลูปกราวด์ปิด (Ground Loop)**
+
+```
++-------------------------------------------------------------+
+|               Ground Loop Error in 2-Port Setup             |
+|                                                             |
+|   VNA Port 1 Center ──►── DUT ──►── VNA Port 2 Center       |
+|                                                             |
+|   VNA Shield 1 ──═════════════════════════── VNA Shield 2   |
+|         │           (Braid Resistance R_shield)    │        |
+|         ▼                                          ▼        |
+|   [ Chassis GND ] ══════════════════════════ [ Chassis GND ]|
+|                                                             |
+|   Shield current injects error voltage: V_err = I_shield * R|
+|   Creates false "Resistance Floor" (~ 5 - 20 mΩ at DC/Low-f)|
++-------------------------------------------------------------+
+```
+
+ความต้านทานของปลอกชีลด์สายเคเบิล ($R_{shield} \approx 10 - 30\text{ m}\Omega$) จะต่อขนานเข้ากับจุดวัด ทำให้ที่ความถี่ต่ำ ($< 100\text{ kHz}$) เครื่อง VNA จะอ่านค่าติดเพดานความต้านทานลวง (**False Resistance Floor**) ไม่สามารถวัดค่าต่ำกว่า $10\text{ m}\Omega$ ได้จริง
+
+**โซลูชันระดับ Senior:**
+- ต้องสวม **แกนเฟอร์ไรต์ประสิทธิภาพสูง (Common-Mode Choke / Coaxial Balun)** รอบสายโคแอกเชียลอย่างน้อย 1 เส้น เพื่อสร้างความต้านทานคอมมอนโหมด ($Z_{CM} > 1\text{ k}\Omega$) ตัดกระแสลูปชีลด์ไม่ให้ไหลวน หรือใช้หม้อแปลงแยกสัญญาณความถี่สูง (RF Isolation Transformer)
+
+### 1.3 สถาปัตยกรรมการจำลองระนาบความร้อน-แม่เหล็กไฟฟ้า (2.5D vs 3D EM Solvers)
+
+ซอฟต์แวร์จำลอง Power Integrity ใช้วิธีการเชิงตัวเลขที่แตกต่างกันตามขอบเขตของปัญหา:
+
+1. **2.5D Planar Solvers (Cavity Model / Boundary Element Method: เช่น Cadence Sigrity PowerSI, Ansys SIwave):**
+   - มองระนาบคู่ Power/GND เป็นโพรงคลื่นแม่เหล็กไฟฟ้าแบบแผ่นขนาน (Parallel-plate Waveguide Cavity)
+   - คำนวณการกระจายคลื่นในแนวระนาบ $x-y$ และคำนวณการไหลของกระแสใน Via เป็นแบบ 1D ในแนวแกน $z$
+   - ข้อดี: ความเร็วในการประมวลผลสูงมาก สามารถจำลองบอร์ดขนาดใหญ่ที่มีชิ้นส่วนนับหมื่นชิ้นได้ภายในเวลาไม่กี่นาที เหมาะสำหรับ Broadband Impedance Extraction
+2. **3D Full-Wave FEM Solvers (Finite Element Method: เช่น Ansys HFSS, CST Studio Suite):**
+   - แก้สมการแมกซ์เวลล์เต็มรูปแบบใน 3 มิติทุกทิศทาง
+   - เหมาะสำหรับบริเวณโครงสร้างที่มีความไม่ต่อเนื่องสูง เช่น BGA Ball Escape Breakout, Connector Pins, และ Micro-via Transitions ที่ความถี่ $> 1\text{ GHz}$
+
+---
+
+## 2. ทริคหน้างาน OJT แบบ Step-by-Step (現場の実践テクニック)
+
+### กรณีศึกษาความล้มเหลวหน้างาน: 失敗事例 (Shippai Jirei)
+
+**เหตุการณ์:** เมนบอร์ดเซิร์ฟเวอร์แบบ Dual-Socket (High-End Cloud Compute Server) รางไฟ $V_{DD\_CORE} = 0.85\text{ V}$ กระแสทำงานสูงสุด $180\text{ A}$ 
+
+**อาการล้มเหลว:**
+1. ในขั้นตอนการจำลอง PI Simulation โดยวิศวกรจูเนียร์ รายงานผลระบุว่าโครงข่าย PDN "ผ่านเกณฑ์อย่างสมบูรณ์แบบ (100% Pass)" โดยค่าอิมพีแดนซ์ต่ำกว่า $Z_{target} = 0.5\text{ m}\Omega$ ตลอดช่วงความถี่ตั้งแต่ DC จนถึง $100\text{ MHz}$
+2. แต่เมื่อผลิตบอร์ดตัวอย่างล็อตแรก (Proto-1) และนำไปวัดอิมพีแดนซ์จริงในห้องแล็บด้วย VNA กลับพบข้อขัดแย้ง 2 จุดใหญ่:
+   - ที่ความถี่ต่ำ ($10\text{ kHz} - 100\text{ kHz}$): กราฟที่วัดได้พุ่งสูงถึง **$12\text{ m}\Omega$** (สูงกว่า Simulation ถึง 24 เท่า!)
+   - ที่ความถี่ปานกลาง ($45\text{ MHz}$): กราฟที่วัดได้เกิดยอดเรโซแนนซ์ทะลุขึ้นไปถึง **$3.8\text{ m}\Omega$** ในขณะที่กราฟจำลองแสดงค่าแบนราบเพียง $0.3\text{ m}\Omega$
+3. เมื่อเปิดรันโปรเซสเซอร์จริง บอร์ดเกิดอาการรีเซ็ตตัวเอง (Spontaneous Kernel Panic) เมื่อโหลดการประมวลผลกระโดดข้ามระดับ
+
+```
+[Simulation vs Reality Discrepancy]
+Simulation (Naive):   Flat 0.3 mΩ line (Assumed ideal VRM, No Fixture Parasitics)
+Lab VNA Measurement:  Massive 12 mΩ floor at low-f (Ground loop error!)
+                      3.8 mΩ Resonance Spike at 45 MHz (Ignored VRM Phase Margin!)
+Reality Test:         Kernel Panic Crash at 45 MHz Transient Load!
+```
+
+**Root Cause Analysis (RCA):**
+1. **ข้อผิดพลาดในการวัดแล็บ (Ground Loop Error ที่ความถี่ต่ำ):** 
+   ที่ย่านความถี่ต่ำ ($< 100\text{ kHz}$) สาเหตุที่กราฟ VNA พุ่งสูงถึง $12\text{ m}\Omega$ ไม่ได้เกิดจากบอร์ดจริง แต่เกิดจาก **Ground Loop Error** ระหว่างสายเคเบิลของ VNA โดยไม่ได้ใส่ Ferrite Choke ความต้านทานชีลด์จึงปรากฏหลอกตาเป็นความต้านทานของบอร์ด
+2. **ข้อผิดพลาดในโมเดลจำลอง (The Ideal VRM Fallacy):**
+   ที่ความถี่ $45\text{ MHz}$ วิศวกรจูเนียร์ตั้งค่าโมเดลของ VRM ในซอฟต์แวร์จำลองเป็น "Ideal 0-Ohm Short Circuit" ที่ต่อขนานกับบอร์ด ซึ่งในความเป็นจริง วงจรควบคุมของ VRM มีแบนด์วิดท์จำกัด (Closed-Loop Bandwidth เพียง $150\text{ kHz}$) ที่ความถี่เกินกว่า $1\text{ MHz}$ ตัวเหนี่ยวนำเอาต์พุตของ VRM ($L_{out}$) จะทำตัวเป็นวงจรเปิด และมีค่าความเหนี่ยวนำปรสิตตกค้าง เมื่อนำโมเดล VRM ในอุดมคติออกไป จึงค้นพบว่าเกิดการเรโซแนนซ์ระหว่างตัวเก็บประจุ Bulk กับระนาบ PCB จริง
+3. **การละเลย S-Parameter ของตัวเก็บประจุที่มีขั้วต่อจริง:**
+   ในแบบจำลอง วิศวกรใส่ค่า MLCC เป็น Ideal $C$ จากสเปกชีต โดยไม่ได้นำเข้าไฟล์ Touchstone (.s2p) ที่รวมค่า Mounting Inductance ของ Pad และ Via เข้าไปด้วย
+
+---
+
+### Step-by-Step Engineering Checklist: ขั้นตอนการทำ PI Simulation และการวัด VNA ที่ถูกต้อง
+
+#### ขั้นตอนที่ 1: การเตรียมโมเดลจำลอง PDN ที่สะท้อนความเป็นจริง (Model Sanity Setup)
+- **VRM Modeling ที่ถูกต้อง:** 
+  - ห้ามใส่ VRM เป็น Ideal Short Circuit หรือ Ideal Voltage Source เด็ดขาด
+  - ให้แทน VRM ด้วยวงจรสมมูลย่านความถี่สูง: วงจรขนานของตัวเก็บประจุเอาต์พุต ($C_{out}$ พร้อม ESR/ESL) อนุกรมกับความเหนี่ยวนำของเอาต์พุตฟิลเตอร์ ($L_f$ และ DCR)
+- **Component Vendor S-Parameter Import:** 
+  - ดาวน์โหลดไฟล์ S-parameter (.s2p) หรือ SPICE Model จากผู้ผลิตตัวเก็บประจุ (เช่น Murata, TDK) ที่ระบุสภาวะแรงดันไฟตรงจริง (DC Bias Condition)
+- **Stackup Material Definition:**
+  - กำหนดค่าสัมประสิทธิ์การสูญเสียไดอิเล็กทริก (Loss Tangent: $\tan\delta$) และความหยาบผิวของทองแดง (Copper Surface Roughness เช่น โมเดล Cannon-Huray) ให้ตรงกับวัสดุบอร์ดจริง (เช่น Isola FR408HR, Megtron 6)
+
+```
++-------------------------------------------------------------+
+|  Correct VRM High-Frequency Model:                          |
+|                                                             |
+|           L_filter         DCR_inductor                     |
+|  VRM ───o───UUUUU─────────────/\/\/\───────o─── To PDN Rail |
+|                                            │                |
+|                                            ▼                |
+|                                     [ Output Caps ]         |
+|                                     (C, ESR, ESL)           |
++-------------------------------------------------------------+
+```
+
+#### ขั้นตอนที่ 2: มาตรฐานการวัด VNA 2-Port Shunt-Thru ในห้องปฏิบัติการ
+1. **การสอบเทียบปลายโพรบ (Calibration):**
+   - ทำการสอบเทียบแบบ **SOLT (Short-Open-Load-Thru)** หรือ **TRL (Thru-Reflect-Line)** ที่ปลายหัวโพรบสัมผัส (Probe Tips) โดยใช้ Calibration Substrate มาตรฐาน ห้ามสอบเทียบที่ปลายสายเคเบิลแล้วต่อโพรบทีหลัง
+2. **การกำจัด Ground Loop:**
+   - ร้อยสายกึ่งแข็ง (Semi-rigid Coaxial Cable) ของทั้งสองพอร์ตผ่านแกนเฟอร์ไรต์ Toroid คุณภาพสูง (Fair-Rite Material 31 หรือ 75) จำนวนอย่างน้อย $5 - 10$ รอบ เพื่อให้ได้ค่า Common-Mode Impedance $> 1\text{ k}\Omega$ ที่ความถี่ต่ำ
+3. **การเชื่อมต่อจุดวัด (Kelvin Connection):**
+   - ใช้โพรบวัดความถี่สูงแบบ Microprobe (เช่น Picoprobe หรือ PacketMicro) จิ้มลงบน Pad ของตัวเก็บประจุ 0402 ใต้ตัวถัง IC หรือบัดกรีสาย Semi-rigid เข้ากับ Pad โดยตรงโดยตัดปลายสายให้สั้นที่สุด ($< 1.0\text{ mm}$)
+
+```
++-------------------------------------------------------------+
+|  VNA Coaxial Balun Setup:                                   |
+|                                                             |
+|   VNA Port 1 ────► [ Ferrite Choke Core ] ───► Probe Tip    |
+|                     (Z_cm > 1000 Ohms)         │            |
+|                                                ▼ DUT Pad    |
+|   VNA Port 2 ◄──── [ Ferrite Choke Core ] ◄─── Probe Tip    |
++-------------------------------------------------------------+
+```
+
+#### ขั้นตอนที่ 3: เกณฑ์การอนุมัติการตรวจแบบ (Sign-Off Acceptance Criteria)
+- **Impedance Margin:** กราฟ $Z_{PDN}(f)$ จากการจำลองและการวัดจริง ต้องอยู่ต่ำกว่าเส้น $Z_{target}$ ตลอดช่วงความถี่ตั้งแต่ DC ถึง $f_{cutoff}$ โดยมีระยะเผื่อปลอดภัย (Safety Margin) อย่างน้อย **$20\%$ (หรือ $Z_{PDN} \le 0.8 \cdot Z_{target}$)**
+- **Correlation Error:** ความคลาดเคลื่อนระหว่างผลการจำลอง CFD/EM กับผลการวัด VNA จริง ต้องไม่เกิน **$\pm 15\%$** ตลอดทุกย่านความถี่
+- **Time-Domain Transient Verification:** นำไฟล์ S-parameter ของบอร์ดไประเบิดเป็น SPICE Model แล้วป้อนรูปคลื่นกระแสสลับจริง ($\Delta I(t)$) เพื่อยืนยันว่าแรงดันกระเพื่อม $\Delta V_{ripple}$ อยู่ในกรอบที่ยอมรับได้
+
+---
+
+## 3. คำศัพท์และประโยคภาษาญี่ปุ่นสำหรับตรวจแบบ (検図 - Kenzu)
+
+### 3.1 ตารางคำศัพท์เทคนิคเฉพาะทาง (専門用語一覧)
+
+| คันจิ (Kanji) | คานะ (Kana) | คำอ่าน (Romaji) | ภาษาอังกฤษ / คำแปลภาษาไทย |
+| :--- | :--- | :--- | :--- |
+| **2ポート測定** | にぽーとそくてい | Ni-pōto Sokutei | 2-Port Shunt-Thru Measurement |
+| **Sパラメータ変換** | えすぱらめーたへんかん | Esu-paramēta Henkan | S-to-Z Parameter Conversion |
+| **グラウンドループ誤差**| ぐらうんどるーぷごさ | Guraundo Rūpu Gosa | Ground Loop / Shield Current Error |
+| **同軸バラン** | どうじくばらん | Dōjiku Baran | Coaxial Balun / Common-mode Choke |
+| **電磁界解析** | でんじかいかいせき | Denjikai Kaiseki | Electromagnetic (EM) Simulation |
+| **測定校正** | そくていこうせい | Sokutei Kōsei | Measurement Calibration (SOLT/TRL) |
+| **伝達インピーダンス** | でんたついんぴーだんす | Dentatsu Inpīdansu | Transfer Impedance ($Z_{21}$) |
+| **実測相関性** | じっそくそうかんせい | Jissoku Sōkan-sei | Measurement-to-Simulation Correlation |
+| **マージン確保** | まーじんかくほ | Mājin Kakuho | Safety Margin Securing |
+| **寄生パラメータ抽出** | きせいぱらめーたちゅうしゅつ | Kisei Paramēta Chūshutsu | Parasitic Extraction |
+| **検図承認** | けんずしょうにん | Kenzu Shōnin | Design Review Sign-Off / Approval |
+| **時間領域過渡応答** | じかんりょういきかとおうとう | Jikan Ryōiki Kato Ōtō | Time-Domain Transient Response |
+
+---
+
+### 3.2 บันทึกการตรวจแบบของ Senior Engineer (検図指摘事項 - Kenzu Comments)
+
+#### คอมเมนต์ที่ 1: ตรวจพบความผิดพลาดในการจำลอง VRM ส่งผลให้ผลการวิเคราะห์ PDN เป็นเท็จ
+> **検図指摘 (Kenzu Feedback 1):**  
+> 「マルチコアプロセッサ電源（$V_{DD} = 0.85\text{V}$、最大電流80A）のPIシミュレーション報告書を検図しました。解析モデルにおいて、VRM（電源モジュール）の出力ポートが『理想0Ωショート』として設定されており、DCから高周波までゼロインピーダンス源として扱われています。この致命的なモデリングミスにより、実際のVRM制御ループ帯域外（300kHz以上）における出力インダクタ（$L_{out} \approx 150\text{nH}$）の遮断効果および等価直列抵抗が完全に隠蔽され、中周波数帯（1MHz〜10MHz）におけるインピーダンスが実態より一桁以上低く誤認されています。電源コントローラの出力インピーダンス特性（SPICEモデルまたは等価RLC並列回路）を組み込み、VRMの位相余裕度低下に伴うインピーダンスピークを含めた上で、再シミュレーションを実施・提示してください。」  
+> *(คำแปล: ตรวจสอบรายงานจำลอง PI ของรางไฟโปรเซสเซอร์ (0.85V, 80A) พบว่าในโมเดลจำลอง พอร์ตเอาต์พุตของ VRM ถูกตั้งค่าเป็น Ideal 0-Ohm Short Circuit ทำให้ทำตัวเป็นแหล่งจ่ายอิมพีแดนซ์ศูนย์ตลอดทุกความถี่ ข้อผิดพลาดร้ายแรงนี้บดบังผลกระทบของ Output Inductor (150nH) นอกแบนด์วิดท์ของคอนโทรลเลอร์ (เกิน 300 kHz) ทำให้อิมพีแดนซ์ในช่วง 1 MHz - 10 MHz ในผลจำลองต่ำกว่าความเป็นจริงกว่าสิบเท่า ขอให้ใส่โมเดลเอาต์พุตอิมพีแดนซ์จริงของ VRM (SPICE Model หรือวงจรสมมูล RLC) ที่รวมการเกิดยอดพีคจาก Phase Margin แล้วรันผลจำลองใหม่มาตรวจสอบ)*
+
+#### คอมเมนต์ที่ 2: ข้อผิดพลาดของ Ground Loop ในการวัด VNA และคำสั่งปรับปรุงกระบวนการวัด
+> **検図指摘 (Kenzu Feedback 2):**  
+> 「ラボにおける試作基板のPDN実測データ（2ポート法）を確認しました。低周波領域（100kHz以下）において、実測インピーダンスが$15\text{m}\Omega$の一定値（レジスタンスフロア）でサチュレーションしており、シミュレーション値（$0.8\text{m}\Omega$）と著しく乖離しています。これは基板の不具合ではなく、2本のセミリジッド同軸ケーブルの外皮シールド間を流れるシールド電流による典型的な『グラウンドループ誤差』です。測定治具の同軸ケーブルに高透磁率フェライトコア（透磁率$\mu_r \ge 5000$）を複数個装填して同軸バランを構成し、コモンモードループを遮断した状態で再測定を実施してください。また、プローブ先端のSOLT校正を再実施し、$100\mu\Omega$レンジでの測定妥当性を検証したデータを提出してください。」  
+> *(คำแปล: ตรวจสอบข้อมูลการวัด PDN จริงบนบอร์ดต้นแบบด้วยวิธี 2-Port พบว่าที่ย่านความถี่ต่ำ (< 100 kHz) อิมพีแดนซ์ที่วัดได้ติดเพดานคงที่อยู่ที่ 15 mΩ ซึ่งเบี่ยงเบนจากผลจำลอง (0.8 mΩ) อย่างมหาศาล นี่ไม่ใช่ปัญหาของบอร์ด แต่เป็น Ground Loop Error คลาสสิกจากกระแสไหลวนในชีลด์ของสายโคแอกเชียล ขอให้นำแกนเฟอร์ไรต์ความเหนี่ยวนำสูงมาสวมทำเป็น Coaxial Balun เพื่อตัดลูปคอมมอนโหมดแล้วทำการวัดใหม่ พร้อมทั้งทำการสอบเทียบ SOLT ที่ปลายโพรบใหม่และส่งข้อมูลยืนยันความถูกต้องในย่าน 100 µΩ มาให้ตรวจอีกครั้ง)*
+
+---
+
+## 4. ควิซวิเคราะห์ปัญหาระดับวิศวกรอาวุโส (上級技術クイズ)
+
+### คำถามที่ 1: การอนุพันธ์ทางคณิตศาสตร์ของสูตร 2-Port Shunt-Thru และการคำนวณอิมพีแดนซ์จากค่า $S_{21}$
+
+ในการวัดอิมพีแดนซ์ของรางจ่ายไฟคอร์ $V_{DD} = 0.75\text{ V}$ ด้วยเครื่อง VNA ระบบ $Z_0 = 50\ \Omega$ 
+
+1. จงแสดงการพิสูจน์ทางคณิตศาสตร์จากเมทริกซ์การส่งผ่าน (Transmission ABCD Matrix) ของโหลดต่อขนาน $Z_{DUT}$ ไปสู่สมการของ $S_{21}$:
+   $$S_{21} = \frac{2 Z_{DUT}}{2 Z_{DUT} + Z_0}$$
+2. หากเครื่อง VNA วัดค่าพารามิเตอร์การส่งผ่านที่ความถี่เรโซแนนซ์ $f = 25\text{ MHz}$ ได้ค่า:
+   $$S_{21} = -66.02\text{ dB} \ \angle 0^{\circ}$$
+   จงคำนวณหาค่าขนาดของอิมพีแดนซ์ $Z_{DUT}$ ที่แท้จริงในหน่วยมิลลิโอห์ม ($\text{m}\Omega$) โดยใช้สมการแม่นยำเต็มรูปแบบ?
+
+#### เฉลยและบทวิเคราะห์เชิงลึก:
+
+**1. การอนุพันธ์สูตร $S_{21}$ จากเมทริกซ์ ABCD:**
+- อุปกรณ์ DUT ต่อขนานขวางระหว่างสายส่งสัญญาณ Port 1 ($Z_0$) และ Port 2 ($Z_0$) 
+- เมทริกซ์ ABCD ขององค์ประกอบต่อขนาน (Shunt Admittance $Y = \frac{1}{Z_{DUT}}$) คือ:
+  $$\begin{bmatrix} A & B \\ C & D \end{bmatrix} = \begin{bmatrix} 1 & 0 \\ Y & 1 \end{bmatrix} = \begin{bmatrix} 1 & 0 \\ \frac{1}{Z_{DUT}} & 1 \end{bmatrix}$$
+- ความสัมพันธ์มาตรฐานระหว่างพารามิเตอร์การกระเจิง $S_{21}$ และเมทริกซ์ ABCD ในระบบสมมาตร $Z_{01} = Z_{02} = Z_0$ คือ:
+  $$S_{21} = \frac{2}{A + \frac{B}{Z_0} + C \cdot Z_0 + D}$$
+- แทนค่า $A = 1, B = 0, C = \frac{1}{Z_{DUT}}, D = 1$:
+  $$S_{21} = \frac{2}{1 + 0 + \left(\frac{1}{Z_{DUT}}\right) Z_0 + 1} = \frac{2}{2 + \frac{Z_0}{Z_{DUT}}}$$
+- คูณเศษและส่วนด้วย $Z_{DUT}$:
+  $$S_{21} = \frac{2 Z_{DUT}}{2 Z_{DUT} + Z_0} \quad \text{(ได้รับการพิสูจน์สมบูรณ์)}$$
+
+**2. คำนวณหาค่า $Z_{DUT}$ จาก $S_{21} = -66.02\text{ dB}$:**
+- แปลงค่า $S_{21}$ จากเดซิเบลเป็นอัตราส่วนเชิงเส้น:
+  $$|S_{21}| = 10^{\frac{-66.02}{20}} = 10^{-3.301} \approx 0.000500 = 5.0 \times 10^{-4}$$
+- จากสมการแม่นยำเต็มรูปแบบ:
+  $$Z_{DUT} = \frac{Z_0}{2} \cdot \frac{S_{21}}{1 - S_{21}}$$
+  แทนค่า $Z_0 = 50\ \Omega$ และ $S_{21} = 5.0 \times 10^{-4}$:
+  $$Z_{DUT} = \frac{50}{2} \cdot \frac{5.0 \times 10^{-4}}{1 - 0.000500} = 25 \cdot \frac{5.0 \times 10^{-4}}{0.9995}$$
+  $$Z_{DUT} \approx 25 \times 5.0025 \times 10^{-4} \approx 0.012506\ \Omega = 12.51\text{ m}\Omega$$
+
+*(หมายเหตุ: หากใช้สูตรประมาณการอย่างง่าย $Z_{DUT} \approx 25 \cdot S_{21} = 25 \times 0.0005 = 12.50\text{ m}\Omega$ จะพบว่ามีความคลาดเคลื่อนเพียง $0.05\%$ เท่านั้น ซึ่งยืนยันความแม่นยำของสูตรประมาณการในย่านอิมพีแดนซ์ต่ำ)*
+
+---
+
+### คำถามที่ 2: การวิเคราะห์ข้อผิดพลาด Ground Loop Error จากความต้านทานชีลด์ของสายเคเบิล
+
+ในการวัด PDN ด้วยวิธี 2-Port Shunt-Thru วิศวกรไม่ได้ติดตั้ง Coaxial Balun สายโคแอกเชียลของ Port 1 และ Port 2 แต่ละเส้นมีความต้านทานของปลอกชีลด์ถัก (Braid Shield Resistance) เท่ากับ $R_{s1} = R_{s2} = 15\text{ m}\Omega$ 
+
+โครงสร้างกราวด์ลูปทำให้มีกระแสไหลวนในชีลด์ โดยความต้านทานชีลด์ต่อขนานอยู่กับ DUT ส่งผลให้เกิดความต้านทานพื้นต่ำสุดลวง (False Resistance Floor: $R_{floor}$) ซึ่งจำกัดความสามารถในการวัดค่าต่ำสุด โดยสูตรประมาณการคือ:
+
+$$R_{floor} \approx \frac{R_{shield}}{1 + \frac{2 R_{shield}}{Z_0}} \approx R_{shield}$$
+
+โดยที่ $R_{shield} = R_{s1} \parallel R_{s2} \approx 7.5\text{ m}\Omega$
+
+หากบอร์ดจริงมีค่าอิมพีแดนซ์กระแสตรง $Z_{DUT, true} = 0.50\text{ m}\Omega$ 
+จงคำนวณ:
+1. ค่าอิมพีแดนซ์ที่เครื่อง VNA จะอ่านได้ ($Z_{measured}$) หากไม่มี Balun
+2. ความคลาดเคลื่อนสัมพัทธ์ของการวัด (Measurement Error Percentage)
+3. หากติดตั้ง Coaxial Balun ที่มีอิมพีแดนซ์คอมมอนโหมด $Z_{CM} = 1,500\ \Omega$ ที่ความถี่ $100\text{ kHz}$ จงแสดงว่าค่าความคลาดเคลื่อนลดลงเหลือเท่าใด?
+
+#### เฉลยและบทวิเคราะห์เชิงลึก:
+
+**1. คำนวณค่าอิมพีแดนซ์ที่อ่านได้เมื่อไม่มี Balun ($Z_{measured}$):**
+ในวงจรเทียบเท่าของการมี Ground Loop แรงดันที่เครื่อง VNA Port 2 ตรวจจับได้จะเท่ากับแรงดันตกคร่อม DUT บวกกับแรงดันตกคร่อมชีลด์:
+$$Z_{measured} \approx Z_{DUT, true} + R_{shield} = 0.50\text{ m}\Omega + 7.5\text{ m}\Omega = 8.00\text{ m}\Omega$$
+
+เครื่อง VNA จะแสดงผลว่าอิมพีแดนซ์ของรางไฟคือ **$8.0\text{ m}\Omega$** ทั้งที่ค่าจริงคือ $0.5\text{ m}\Omega$!
+
+**2. คำนวณเปอร์เซ็นต์ความคลาดเคลื่อน:**
+$$\text{Error} = \frac{Z_{measured} - Z_{DUT, true}}{Z_{DUT, true}} \times 100\% = \frac{8.00 - 0.50}{0.50} \times 100\% = \frac{7.50}{0.50} \times 100\% = +1,500\%!$$
+*(ความคลาดเคลื่อนสูงถึง 15 เท่า หรือ $1,500\%$!)*
+
+**3. ผลลัพธ์เมื่อติดตั้ง Coaxial Balun ($Z_{CM} = 1,500\ \Omega$):**
+เมื่อมีแกนเฟอร์ไรต์ อิมพีแดนซ์ของลูปชีลด์จะเพิ่มขึ้นจาก $R_{shield}$ เป็น $R_{shield} + Z_{CM} \approx 1,500\ \Omega$:
+กระแสไหลวนในชีลด์จะลดทอนลงตามสัดส่วนการแบ่งกระแส:
+$$R_{error, balun} \approx R_{shield} \cdot \left( \frac{Z_0 / 2}{Z_{CM}} \right) = (7.5\text{ m}\Omega) \cdot \left( \frac{25\ \Omega}{1,500\ \Omega} \right) = (7.5\text{ m}\Omega) \times 0.01667 \approx 0.125\text{ m}\Omega$$
+
+ค่าอิมพีแดนซ์ที่วัดได้ใหม่:
+$$Z_{measured, balun} \approx 0.50\text{ m}\Omega + 0.125\text{ m}\Omega = 0.625\text{ m}\Omega$$
+ความคลาดเคลื่อนลดลงเหลือ:
+$$\text{Error}_{balun} = \frac{0.625 - 0.50}{0.50} \times 100\% = +25\%$$
+*(และหากร้อยสายวนซ้ำ 3-5 รอบ ค่า $Z_{CM}$ จะพุ่งสูงเกิน $5,000\ \Omega$ ส่งผลให้ความคลาดเคลื่อนลดลงเหลือต่ำกว่า $5\%$)*
+
+---
+
+### คำถามที่ 3: การประเมิน Transfer Impedance Matrix ($Z_{21}$) และสัญญาณรบกวนข้ามรางไฟ (Power Rail Crosstalk)
+
+ในการจำลอง PI Simulation ของบอร์ดประมวลผลสัญญาณผสม (Mixed-Signal SoC) มีรางจ่ายไฟ 2 รางวางอยู่บนระนาบทองแดงชั้นเดียวกัน แต่แยกโซนด้วยร่องบาก (Moat / Split Plane):
+- **Port 1:** รางไฟดิจิทัลคอร์ $V_{DD\_DIG} = 0.85\text{ V}$ ซึ่งมีสัญญาณรบกวนกระแสสลับจากการสวิตชิ่งของเกต $I_1(f) = 4.0\text{ A}$ ที่ความถี่ฮาร์โมนิก $f = 120\text{ MHz}$
+- **Port 2:** รางไฟแอนะล็อกของวงจร Phase-Locked Loop (PLL) $V_{DDA\_PLL} = 1.80\text{ V}$ ซึ่งมีความไวต่อสัญญาณรบกวนสูงมาก โดยสเปกกำหนดว่าสัญญาณรบกวนแรงดันเหนี่ยวนำ ($V_{noise, 2}$) ต้องไม่เกิน $1.5\text{ mV}_{\text{peak}}$ เพื่อป้องกันไม่ให้เกิด Clock Phase Jitter เกินเกณฑ์
+
+จากการจำลองด้วยซอฟต์แวร์ 2.5D EM Solver (Ansys SIwave) ค่า Transmission Parameter ระหว่างสองพอร์ตคือ:
+$$S_{21} = -74\text{ dB} \ \angle 45^{\circ} \quad \text{ที่ความถี่ } 120\text{ MHz}$$
+
+จงคำนวณ:
+1. ค่า Transfer Impedance ($Z_{21} = \frac{V_2}{I_1}$) ระหว่างสองรางไฟ โดยใช้สูตรแปลง $Z_{21} \approx 25 \cdot S_{21}$
+2. ขนาดของแรงดันสัญญาณรบกวนกระเพื่อม ($V_{noise, 2}$) ที่ถูกฉีดข้ามระนาบเข้าสู่วงจร PLL
+3. รางไฟ PLL ผ่านเกณฑ์ความน่าเชื่อถือหรือไม่ และหากไม่ผ่าน ให้ชี้แนะแนวทางแก้ไขทางเลย์เอาต์เพื่อลดค่า $Z_{21}$?
+
+#### เฉลยและบทวิเคราะห์เชิงลึก:
+
+**1. คำนวณค่า Transfer Impedance ($Z_{21}$):**
+- แปลง $S_{21} = -74\text{ dB}$ เป็นขนาดเชิงเส้น:
+  $$|S_{21}| = 10^{\frac{-74}{20}} = 10^{-3.7} \approx 1.995 \times 10^{-4}$$
+- คำนวณ Transfer Impedance:
+  $$|Z_{21}| \approx 25 \cdot |S_{21}| = 25 \times (1.995 \times 10^{-4}) \approx 4.988 \times 10^{-3}\ \Omega \approx 4.99\text{ m}\Omega$$
+
+**2. คำนวณแรงดันสัญญาณรบกวนเหนี่ยวนำ ($V_{noise, 2}$):**
+กระแสสลับ $I_1 = 4.0\text{ A}$ ที่ความถี่ $120\text{ MHz}$ ฉีดผ่านระนาบทองแดง:
+$$V_{noise, 2} = I_1 \cdot |Z_{21}| = 4.0\text{ A} \times 4.988\text{ m}\Omega \approx 19.95\text{ mV}$$
+
+**3. การประเมินและแนวทางแก้ไขทางวิศวกรรม:**
+- **การประเมิน:** สัญญาณรบกวนที่เหนี่ยวนำเข้าสู่วงจร PLL พุ่งสูงถึง **$19.95\text{ mV}$ ซึ่งสูงกว่าเกณฑ์ยอมรับได้ ($1.5\text{ mV}$) ถึงกว่า 13 เท่า!** บอร์ดจะ **ตกสเปกอย่างแน่นอน (Fail)** และจะทำให้วงจร PLL หลุดการซิงโครไนซ์ เกิด Phase Jitter รุนแรง
+- **แนวทางแก้ไขระดับ Senior Engineer:**
+  1. **เพิ่มระยะห่างของร่องบาก (Enlarge Moat Isolation):** ขยายร่องแยก (Split Moat) จากเดิม $0.5\text{ mm}$ เป็น $\ge 2.0\text{ mm}$ เพื่อลด Capacitive Coupling ข้ามระนาบ
+  2. **เปลี่ยนชั้นเลเยอร์ของระนาบไฟ PLL:** ย้ายระนาบ $V_{DDA\_PLL}$ ไปไว้คนละเลเยอร์ โดยมีระนาบ Solid Ground กั้นกลางทำหน้าที่เป็น Faraday Shield ป้องกันการเหนี่ยวนำทางแม่เหล็กไฟฟ้า
+  3. **ติดตั้ง Ferrite Bead Filter หรือ Active LDO:** ใส่ชิป Low-Dropout Regulator (LDO) ที่มีค่า Power Supply Rejection Ratio สูง ($\text{PSRR} > 40\text{ dB}$ ที่ $100\text{ MHz}$) คั่นที่ทางเข้าของรางไฟ PLL เพื่อดูดซับสัญญาณรบกวนก่อนเข้าสู่โมดูล Clock
