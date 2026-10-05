@@ -1,27 +1,159 @@
-# 003 PCB Routing Part 3: BGA Escape Routing (BGA引き出し配線)
+# Lesson 003: PCB Routing Part 3 - High-Density BGA Escape Routing & HDI Design
+*(プリント基板の高密度BGA引き出し配線とHDI設計)*
 
-## ทฤษฎีวิศวกรรมเชิงลึก (In-Depth Engineering Theory)
-BGA (Ball Grid Array) ที่มี Pitch ต่ำ (เช่น < 0.8mm) เป็นความท้าทายหลักในการออกแบบ PCB แบบ High-Density Interconnect (HDI)
-- **Dogbone vs. Via-in-Pad**: 
-  - *Dogbone*: ใช้กับ Pitch ใหญ่ (> 0.8mm) โดยเดิน Trace สั้นๆ ออกจาก Pad แล้วลง Via
-  - *Via-in-Pad (VIP)*: ต้องใช้ใน Fine Pitch BGA ข้อดีคือลด Parasitic Inductance แต่ต้องใช้กระบวนการ Tented, Capped หรือ Plated over (POFV) เพื่อป้องกันตะกั่วไหลลง Via (Solder Wicking)
-- **Layer Stackup Strategy**: การวางแผนจำนวนเลเยอร์ที่จำเป็นต้องใช้ กฎพื้นฐานคือ จำนวน Routing Layers = จำนวน BGA Rows / 2 (โดยประมาณ ขึ้นอยู่กับ Design Rules)
+---
 
-## ทริคหน้างาน OJT (On-the-Job Tricks)
-- **วางแผน Fanout ล่วงหน้า**: เริ่มจากการกำหนด Fanout pattern (เช่น Quadrant routing แบ่งเป็น 4 ทิศทาง) เพื่อไม่ให้เส้นทางบล็อกกันเอง
-- **Pin Swapping**: ทำงานร่วมกับ Firmware/FPGA Engineer เพื่อทำ Pin swapping ในกลุ่มสัญญาณที่สลับได้ (เช่น GPIO, Data bus บางประเภท) ช่วยลดการตัดกันของสาย (Crossover) และลดจำนวนเลเยอร์ได้มาก
-- **Ground/Power Vias**: แชร์ Via สำหรับ GND/PWR ให้มากที่สุด (หากยอมรับ Parasitics ได้) เพื่อเปิดพื้นที่ให้สัญญาณ
+## 1. ทฤษฎีวิศวกรรมเชิงลึก (高度なエンジニアリング理論)
 
-## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図 - Kenzu)
-- **引き出し配線 (Hikidashi Haisen)**: Escape routing / Fanout
-- **パッド・オン・ビア (Paddo-on-Bia)**: Via-in-Pad
-- **ドッグボーン (Doggubōn)**: Dogbone routing
-- **多層基板 (Tasō Kiban)**: Multilayer PCB
-- **ピンアサイン変更 (Pin Asain Henkō)**: Pin assignment change / Pin swapping
+เมื่อระบบฮาร์ดแวร์ใช้ชิปประมวลผลขนาดใหญ่ เช่น SoC, FPGA หรือหน่วยความจำ LPDDR4/5 ในแพ็กเกจ BGA (Ball Grid Array) ที่มีระยะห่างขา (Pitch, $P$) ต่ำกว่า $0.8 \text{ mm}$ หรือลงไปถึง $0.5 \text{ mm} / 0.4 \text{ mm}$ การกระจายสายสัญญาณออกจากใต้ BGA (BGA Escape / Fanout Routing) ถือเป็นจุดตัดสินความเป็นไปได้ของการผลิต (DFM) และความสมบูรณ์ของสัญญาณ (Signal Integrity)
 
-## ควิซท้ายบท (Quiz)
-**คำถาม:** ปัญหาหลักที่ต้องระวังหากใช้เทคนิค Via-in-Pad โดยไม่ผ่านการอุด (Capping/Plugging) คืออะไร?
-1. Crosstalk สูงขึ้น
-2. น้ำยาบัดกรี (Solder paste) ไหลลงรู Via ทำให้เกิดจุดบัดกรีที่ไม่สมบูรณ์ (Solder Wicking / Void)
-3. สัญญาณขาดหายในความถี่ต่ำ
-**เฉลย:** ข้อ 2
+---
+
+### 1.1 การคำนวณเรขาคณิตของช่องเดินสาย (Escape Channel Geometry)
+ในแต่ละช่องระหว่างลูกบอล BGA สองลูก จะมีพื้นที่ว่างสำหรับให้เส้น Trace วิ่งผ่านได้จำกัด คำนวณได้จาก:
+
+$$W_{channel} = P - D_{pad} - 2 \times S_{min}$$
+
+โดยที่:
+- $P$: BGA Pitch (ระยะห่างกึ่งกลางระหว่างลูกบอล เช่น $1.0\text{ mm}, 0.8\text{ mm}, 0.5\text{ mm}$)
+- $D_{pad}$: เส้นผ่านศูนย์กลางของ Land Pad บน PCB (ตามมาตรฐาน IPC-7351)
+- $S_{min}$: ระยะห่างต่ำสุดระหว่าง Trace กับ Pad (Clearance) ที่โรงงานผลิตบอร์ด (Fab House) ทำได้
+
+```
+            ◄────── P ──────►
+          ┌───┐           ┌───┐
+          │   │           │   │  BGA Pads (D_pad)
+          └───┘           └───┘
+            ◄── S ──►[w]◄── S ──►
+              Escape Channel
+```
+
+**ตัวอย่างการคำนวณจริง (BGA Pitch 0.8 mm):**
+- กำหนดให้ $P = 0.80 \text{ mm} \ (31.5 \text{ mil})$
+- $D_{pad} = 0.40 \text{ mm} \ (15.7 \text{ mil})$
+- ช่องว่างที่เหลือ $W_{channel} = 0.80 - 0.40 = 0.40 \text{ mm} \ (15.7 \text{ mil})$
+- หากโรงงาน PCB มีขีดจำกัดขั้นต่ำ (Fabrication Limit) อยู่ที่ $w = 4 \text{ mil} \ (0.10 \text{ mm})$ และ $s = 4 \text{ mil} \ (0.10 \text{ mm})$:
+  $$\text{พื้นที่ต้องการสำหรับ 1 Trace} = s + w + s = 4 + 4 + 4 = 12 \text{ mil} < 15.7 \text{ mil}$$
+  *ผลการวิเคราะห์:* สามารถเดินได้ **1 เส้นต่อช่อง** (Single-trace per channel) แต่ไม่สามารถเดิน 2 เส้นได้เพราะต้องการพื้นที่อย่างน้อย $s + w + s + w + s = 20 \text{ mil}$ ซึ่งเกินกว่าช่องว่างที่มี
+
+---
+
+### 1.2 การประเมินจำนวน Routing Layers ขั้นต่ำ
+สำหรับ BGA ที่มีจำนวนแถวทั้งหมด $N_{rows}$ (จากขอบด้านหนึ่งไปอีกด้านหนึ่ง) จำนวน Layer ที่ต้องใช้สำหรับกระจายสัญญาณ (Signal Routing Layers) คำนวณเบื้องต้นได้จาก:
+
+$$N_{layers} \approx \left\lceil \frac{\frac{N_{rows}}{2} - 1}{N_{traces\_per\_channel}} \right\rceil$$
+
+*(แถวด้านนอกสุด 2 แถวสามารถลากออกบน Top Layer ได้โดยไม่ต้องผ่าน Via)*
+
+**กรณีศึกษา:** BGA ขนาด $484 \text{ pins}$ แบบ $22 \times 22$ แถว ($N_{rows} = 22$) เมื่อเดินสายได้ 1 Trace ต่อช่อง ($N_{traces\_per\_channel} = 1$):
+$$N_{layers} \approx \left\lceil \frac{11 - 1}{1} \right\rceil = 10 \text{ Signal Layers}$$
+หากรวมระนาบ Power/Ground เข้าไปด้วย บอร์ดนี้อาจต้องใช้ความหนาถึง 16–20 Layers เพื่อให้สัญญาณหนาแน่นนี้หลุดออกมาได้หมด! 
+
+วิศวกร Senior จึงต้องใช้เทคนิค **Quadrant Escape** ร่วมกับ **Pin Swapping** และเทคโนโลยี **HDI (High-Density Interconnect)** เพื่อลดจำนวน Layer ลงเหลือ 10–12 Layers
+
+---
+
+### 1.3 Dogbone Fanout vs. VIPPO (Via-In-Pad Plated Over)
+| พารามิเตอร์ | Dogbone Fanout | VIPPO (POFV / IPC-4761 Type VII) |
+|---|---|---|
+| **BGA Pitch ที่รองรับ** | $\ge 0.8 \text{ mm}$ | $\le 0.65 \text{ mm}$ และ $\ge 0.8 \text{ mm}$ (สำหรับ High-Speed) |
+| **โครงสร้าง** | เดิน Trace สั้นๆ ออกจาก Pad แล้วลง Through-hole Via | เจาะรู Via ตรงกลาง Pad ของ BGA แล้วอุดเรซินชุบทองแดงปิดทับ |
+| **Parasitic Inductance ($L_{via}$)** | **$1.2 - 2.5 \text{ nH}$** (จากความยาว Trace + Via) | **$0.3 - 0.5 \text{ nH}$** (สั้นและตรงดิ่งลงสู่ Plane ทันที) |
+| **ผลต่อ Signal Integrity** | เกิด Stub และความจุแฝงสูง | รักษาความต่อเนื่องของ Impedance ได้ดีเยี่ยม |
+| **ต้นทุนการผลิต (Cost)** | ต่ำ (กระบวนการ Standard PCB) | สูงขึ้น 15–25% (ต้องใช้กระบวนการ Filled & Capped) |
+
+---
+
+## 2. ทริคหน้างาน OJT แบบ Step-by-Step (現場の実践テクニック)
+
+### กรณีศึกษาความล้มเหลวหน้างาน (失敗事例: Shippai Jirei)
+**ปัญหา:** ผลิตบอร์ดต้นแบบจำนวน 50 ใบ พบปัญหาชิป BGA เชื่อมต่อไม่ติด (Open Circuit) และขาสัญญาณบางขาลัดวงจร (Short Circuit) หลังผ่านเตาอบ Reflow ส่องกล้อง X-ray พบว่ามีฟองอากาศ (Solder Void) ภายในลูกบอล BGA เกินกว่า 40% (มาตรฐาน IPC-A-610 Class 3 กำหนดห้ามเกิน 25%)
+**สาเหตุที่ตรวจพบ (検図での指摘):**
+วิศวกร Layout ใช้เทคนิค Via-in-Pad บนลูกบอล BGA Pitch 0.65 mm แต่ในแบบสั่งผลิต (Gerber / Fab Drawing) **ไม่ได้ระบุให้โรงงานทำการอุดรู Via ด้วยเรซินและชุบทองแดงปิดหน้า (Capped Via / POFV)** เมื่อตะกั่ว Solder Paste หลอมเหลวในเตาอบ Reflow ตะกั่วจึงถูกดูดไหลลงไปในรูเจาะ Via (ปรากฏการณ์ **はんだ吸い込み - Solder Wicking**) ทำให้เนื้อตะกั่วบน Pad หายไปจนลูกบอล BGA ไม่สัมผัสกับ Pad
+
+---
+
+### ขั้นตอนการออกแบบ BGA Escape ให้ปลอดข้อผิดพลาด (検図チェックリスト):
+1. **การกำหนด Fanout Pattern แบบ 4 ทิศทาง (Quadrant Routing):**
+   - ให้แบ่ง BGA ออกเป็น 4 ส่วน (Top-Left, Top-Right, Bottom-Left, Bottom-Right) แล้วลากสายออกเฉียง 45 องศาออกจากจุดกึ่งกลางของ BGA เพื่อเปิดพื้นที่ตรงกลางให้ Via ของ Power/Ground สามารถวางตัวเก็บประจุ Decoupling ใต้ท้อง BGA ได้
+2. **การป้องกัน Swiss Cheese Effect ใต้ BGA:**
+   - เมื่อ Via จำนวนมากเจาะทะลุ Reference Ground Plane ใต้ BGA ช่องว่างรอบ Via (Anti-pads) มักจะชนกันจนกลายเป็นร่องตัดยาว (Slot) ทำให้ Ground Plane ขาดเป็นชิ้นเล็กชิ้นน้อย
+   - *กฎบังคับ:* ต้องมีเนื้อทองแดง (Web of copper) เชื่อมระหว่าง Anti-pad ของแต่ละ Via อย่างน้อย **$4 \text{ mil} \ (0.10 \text{ mm})$** เสมอ หากพื้นที่ไม่พอ ให้จัดเรียง Via แบบทแยงมุม (Diagonal pattern) เพื่อเปิดทางให้ระนาบ Ground ไหลผ่านได้
+3. **การสั่งผลิตแบบ POFV (Plated-Over-Filled-Via) อย่างชัดเจน:**
+   - ใน Drawing ผลิต ต้องระบุข้อความ: *"All vias in BGA pads must be plugged with non-conductive epoxy and planarized/plated over per IPC-4761 Type VII."*
+
+---
+
+## 3. คำศัพท์และประโยคภาษาญี่ปุ่นสำหรับตรวจแบบ (検図 - Kenzu)
+
+### ศัพท์เทคนิคสำคัญ (重要技術用語)
+| คำศัพท์ | คำอ่าน (Kana) | คำแปลภาษาไทย / ภาษาอังกฤษ |
+|---|---|---|
+| **引き出し配線** | ひきだしはいせん (Hikidashi Haisen) | BGA Escape / Fanout Routing |
+| **パッドオンビア** | パッドオンビア (Paddo-on-Bia) | Via-in-Pad (VIP) |
+| **はんだ吸い込み** | はんだすいこみ (Handa Suikomi) | Solder Wicking (ตะกั่วถูกดูดลงรู Via) |
+| **ボイド率** | ボイドりつ (Boido-ritsu) | Void Ratio (อัตราส่วนฟองอากาศในจุดบัดกรี) |
+| **アンチパッド重複** | アンチパッドちょうふく (Anchipaddo Chōfuku) | Anti-pad Overlap (รอยฉลุรอบ Via ชนกันจน Plane ขาด) |
+| **スタガードビア** | スタガードビア (Sutagādo Bia) | Staggered Microvias (ไมโครเวียแบบเยื้องสลับฟันปลา) |
+| **スタックビア** | スタックビア (Sutakku Bia) | Stacked Microvias (ไมโครเวียแบบเรียงซ้อนตรงกัน) |
+| **未接続** | みせつぞく (Misetsuzoku) | Open circuit / Unconnected |
+
+### ประโยคตัวอย่างที่ใช้จริงในการทำ Design Review (検図の指摘文例)
+
+> **指摘事項 1:**  
+> 「0.65mmピッチBGA（U1）の電源端子直下にビアが配置されていますが、製造仕様書にPOFV（樹脂埋めメッキ）の指定がありません。リフロー時のはんだ吸い込みによる接続不良（未はんだ/ボイド）を防止するため、ビアインパッド部はIPC-4761 Type VII準拠で穴埋め・蓋メッキ処理を指示してください。」  
+> *(ใต้ขา Power ของ BGA 0.65mm มีการวาง Via ตรง Pad แต่ในแบบสั่งผลิตไม่ได้ระบุ POFV เพื่อป้องกันตะกั่วถูกดูดลงรู Via จนเกิดอาการรอยเชื่อมไม่ติดหรือเกิด Void กรุณาระบุใน Spec การผลิตให้อุดรูและชุบทองแดงปิดหน้าตามมาตรฐาน IPC-4761 Type VII)*
+
+> **指摘事項 2:**  
+> 「BGA中心部のGNDビアにおいて、アンチパッド同士が結合してL2層のベタGNDが分断（スイスチーズ現象）されています。高速信号のリターンパスおよびPDNインピーダンスが悪化するため、ビアの配置間隔を見直し、最低でも0.1mm以上の銅箔ウェブを確保してください。」  
+> *(บริเวณกึ่งกลาง BGA มี Anti-pad ของ GND Via ชนกันจนตัดระนาบ Solid Ground บน L2 ขาดออกจากกัน ส่งผลให้ Return Path และ PDN Impedance แย่ลง กรุณาปรับระยะห่างของ Via เพื่อให้มีเนื้อทองแดงกว้างอย่างน้อย 0.1 mm ไหลผ่านได้)*
+
+---
+
+## 4. ควิซวิเคราะห์ปัญหาระดับวิศวกรอาวุโส (上級技術クイズ)
+
+### ข้อที่ 1 (การคำนวณพื้นที่และระยะ Clearance ของ BGA)
+ในการออกแบบบอร์ดที่ใช้ BGA Pitch $0.5 \text{ mm} \ (19.7 \text{ mil})$ หากกำหนดเส้นผ่านศูนย์กลางของ Land Pad บนบอร์ดเท่ากับ $0.25 \text{ mm} \ (9.8 \text{ mil})$ และโรงงานผลิต PCB มีความสามารถในการผลิตที่ Trace Width ต่ำสุด $w = 3 \text{ mil} \ (0.076 \text{ mm})$ และ Clearance ต่ำสุด $s = 3 \text{ mil} \ (0.076 \text{ mm})$ ถามว่า:
+สามารถเดินลายวงจรผ่านระหว่างคู่ Pad ของ BGA นี้ได้กี่เส้นในแต่ละช่อง?
+
+- **ก)** ไม่สามารถเดินผ่านได้เลยแม้แต่เส้นเดียว
+- **ข)** เดินผ่านได้ 1 เส้นพอดี และเหลือ Clearance สำรองประมาณ $0.8 \text{ mil}$
+- **ค)** เดินผ่านได้ 2 เส้นอย่างสบายๆ
+- **ง)** ต้องเปลี่ยนไปใช้เทคโนโลยีบอร์ดแบบ Flex เท่านั้น
+
+> **เฉลยและบทวิเคราะห์:**  
+> **ข้อ ข)**  
+> คำนวณช่องว่างระหว่าง Pad:  
+> $$W_{channel} = P - D_{pad} = 0.50 \text{ mm} - 0.25 \text{ mm} = 0.25 \text{ mm} \ (9.84 \text{ mil})$$  
+> ความกว้างที่ต้องการสำหรับ 1 เส้น:  
+> $$W_{needed} = s + w + s = 3 \text{ mil} + 3 \text{ mil} + 3 \text{ mil} = 9.0 \text{ mil} \ (0.228 \text{ mm})$$  
+> เมื่อ $W_{channel} (9.84 \text{ mil}) > W_{needed} (9.0 \text{ mil})$ จึงสามารถเดินลายวงจรได้ **1 เส้น** โดยเหลือช่องว่างเผื่อการผลิตเล็กน้อย ($9.84 - 9.0 = 0.84 \text{ mil}$) แต่ไม่สามารถเดิน 2 เส้นได้เพราะ 2 เส้นต้องการพื้นที่ $3+3+3+3+3 = 15 \text{ mil}$ ซึ่งเกินกว่าขนาดช่อง
+
+---
+
+### ข้อที่ 2 (การแก้ปัญหา DFM สำหรับ Via-In-Pad)
+ข้อใดอธิบายความแตกต่างเชิงวิศวกรรมระหว่างการใช้เทคนิค Dogbone Fanout กับเทคนิค Via-In-Pad Plated Over (VIPPO) สำหรับชิปหน่วยความจำ LPDDR4 ความเร็ว 4266 MT/s ได้ถูกต้องที่สุด?
+
+- **ก)** Dogbone Fanout ให้ค่า Inductance ต่ำกว่า VIPPO เพราะเส้นทางยาวช่วยดูดซับสัญญาณรบกวน
+- **ข)** VIPPO ช่วยกำจัด Trace Stub สั้นๆ ของ Dogbone ทำให้ลด Loop Inductance ลงเหลือเพียง $\approx 0.4 \text{ nH}$ จึงช่วยรักษา Eye Opening ที่ความถี่สูงมากได้ดีกว่า
+- **ค)** VIPPO ใช้เฉพาะกับสัญญาณไฟฟ้ากระแสตรง (DC) เท่านั้น ไม่สามารถใช้กับสัญญาณความถี่สูงได้
+- **ง)** Dogbone ป้องกันการเกิด Solder Wicking ได้ดีกว่า VIPPO เสมอ แม้ว่า VIPPO จะผ่านการอุด Epoxy แล้วก็ตาม
+
+> **เฉลยและบทวิเคราะห์:**  
+> **ข้อ ข)**  
+> ในความเร็วระดับ $4266 \text{ MT/s}$ (สัญญาณ Clock $\approx 2.13 \text{ GHz}$, Rise time $< 150 \text{ ps}$) ความยาวของเส้น Trace สั้นๆ ของ Dogbone (ยาวประมาณ 10–15 mil) รวมกับ Via จะสร้างความเหนี่ยวนำแฝง (Parasitic Inductance) สูงถึง $1.5 - 2.5 \text{ nH}$ ซึ่งก่อให้เกิดการสะท้อนสัญญาณและทำให้ Eye Diagram แคบลงอย่างมีนัยสำคัญ  
+> การใช้ VIPPO ร่วมกับการอุดเรซินชุบเรียบ (IPC-4761 Type VII) จะลดระยะทางลงเหลือเพียงความลึกของ Via ทำให้ค่า Inductance ลดลงเหลือเพียง $0.3 - 0.5 \text{ nH}$ ช่วยให้คุณภาพสัญญาณเปิดกว้างและผ่านการทดสอบ Timing Margin
+
+---
+
+### ข้อที่ 3 (การตรวจสอบ Anti-pad และ Plane Integrity)
+ในขั้นตอนการทำ 検図 สำหรับ BGA ขนาด 1000 pins หากพบว่า Anti-pad ของ Via กราวด์และไฟใต้ตัว BGA เกิดการซ้อนทับกัน (Anti-pad Overlap) ลากยาวขนานกันหลายแถว อาการผิดปกติใดมีโอกาสเกิดขึ้นกับระบบมากที่สุดเมื่อบอร์ดทำงานจริง?
+
+- **ก)** บอร์ดจะร้อนขึ้นจนฟอยล์ทองแดงหลุดลอก
+- **ข)** กระแส DC จ่ายไม่พอเพราะทองแดงละลาย
+- **ค)** เกิดสภาวะ Ground Bounce และ Power Sag รุนแรงจาก Spreading Inductance ของ PDN ที่พุ่งสูงขึ้น และสัญญาณความเร็วสูงที่วิ่งผ่านบริเวณนั้นจะเกิด Return Path Discontinuity
+- **ง)** ชิป BGA จะไม่สามารถบัดกรีติดกับบอร์ดได้
+
+> **เฉลยและบทวิเคราะห์:**  
+> **ข้อ ค)**  
+> เมื่อ Anti-pad เชื่อมต่อกันจนระนาบ Ground/Power ถูกตัดขาด (Swiss Cheese Effect) ค่า Impedance ของระบบจ่ายไฟ (PDN Spreading Inductance) จะพุ่งสูงขึ้นหลายเท่า เมื่อทรานซิสเตอร์หลายพันตัวใน BGA สลับสถานะพร้อมกัน (Simultaneous Switching Noise - SSN) จะเกิด Voltage Drop และ Ground Bounce รุนแรงจนชิป Reset ตัวเอง นอกจากนี้สัญญาณความถี่สูงที่วิ่งผ่านระนาบที่ขาดจะหาทางกลับไม่ได้ ทำให้เกิด EMI Radiation สูงมาก
