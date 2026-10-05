@@ -1,16 +1,18 @@
-# Advanced Lesson: FPGA - BRAM (Premium)
+# Lesson 151: FPGA BRAM Architecture and True Dual-Port Operations
 
-## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **BRAM** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
+## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+BRAM (Block RAM) ใน FPGA เป็นหน่วยความจำแบบ SRAM ที่มีโครงสร้างแข็ง (Hard Macro) ฝังอยู่ในซิลิคอน การเข้าใจสถาปัตยกรรมภายในเช่น True Dual-Port (TDP) เป็นสิ่งสำคัญ TDP อนุญาตให้อ่านและเขียนได้อย่างอิสระจากสองพอร์ตพร้อมกันที่ความถี่สัญญาณนาฬิกาต่างกันได้ การจัดการ Address collision ในระดับฮาร์ดแวร์เมื่อทั้งสองพอร์ตเข้าถึงตำแหน่งเดียวกันในเวลาเดียวกันต้องพิจารณา Timing diagram และ Behavior อย่างรอบคอบ
 
-## 2. ทริคหน้างาน OJT (Field Tricks)
-**💡 ข้อคิดจากรุ่นพี่:** ปัญหา 80% หน้างานเกิดจาก Power Supply และ Grounding ที่ไม่ดี
+## ทริคหน้างาน OJT (On-the-Job Training Tricks)
+- **Clock Domain แยกกัน:** เมื่อใช้ BRAM ในแบบ TDP ข้าม Clock domain ตรวจสอบเสมอว่า Setup/Hold time ของ Address/Data lines ได้รับการ constrain อย่างถูกต้อง
+- **Avoid Asynchronous Reset:** สถาปัตยกรรม BRAM ส่วนใหญ่ไม่รองรับ Asynchronous reset หากฝืนใช้ Synthesizer อาจใช้ LUT RAM (Distributed RAM) แทน ทำให้กิน Resource มหาศาล
 
-## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
-* 実装 (Jissou) - การลงอุปกรณ์ (Mounting)
-* 対策 (Taisaku) - การแก้ไขปัญหา/มาตรการ
-* 検図 (Kenzu) - การตรวจแบบ
+## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図 - Kenzu)
+- ブロックRAM (Burokku RAM) - Block RAM
+- デュアルポート (Dyuaru pooto) - Dual port
+- 競合 (Kyougou) - Conflict/Collision
+- アドレス空間 (Adoresu kuukan) - Address space
 
-## 4. ควิซท้ายบท (Quiz)
-**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ BRAM?
-**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ
+## ควิซท้ายบท (Quiz)
+**คำถาม:** การพยายามทำ Asynchronous reset ให้กับ output ของ BRAM จะส่งผลเสียอย่างไร?
+**คำตอบ:** (เฉลย: เครื่องมือสังเคราะห์ (Synthesizer) อาจไม่ใช้ BRAM แต่จะไปใช้ Distributed RAM แทน ทำให้สูญเสียทรัพยากร Logic บน FPGA)

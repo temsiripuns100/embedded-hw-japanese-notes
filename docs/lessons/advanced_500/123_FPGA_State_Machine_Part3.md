@@ -1,16 +1,25 @@
-# Advanced Lesson: FPGA - State Machine (Premium)
+# FPGA State Machine - Part 3: Handling Metastability & Asynchronous Inputs
 
-## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **State Machine** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
+## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+เมื่อ FSM รับสัญญาณที่เป็น Asynchronous (เช่น สัญญาณจากปุ่มกด, สัญญาณจาก Clock Domain อื่น) จะเกิดความเสี่ยงต่อปรากฏการณ์ **Metastability** คือการที่ Flip-Flop เก็บค่าแรงดันไว้ที่ระดับกลาง (ไม่เป็น 0 และไม่เป็น 1) ทำให้ FSM ทำงานผิดพลาด (เข้าสู่ Illegal State)
+- การป้องกัน: ต้องใช้ **Synchronizer** (โดยทั่วไปคือ Flip-Flop 2-3 ตัวต่อกันแบบ Shift Register) เพื่อปรับสัญญาณให้เข้ากับ Clock Domain ของ FSM ก่อนนำไปใช้
+- Mean Time Between Failures (MTBF): การเพิ่มจำนวน Stage ของ Synchronizer จะเพิ่ม MTBF แบบทวีคูณ ช่วยลดความเสี่ยงให้เหลือน้อยมากๆ ในอายุการใช้งานของระบบ
 
-## 2. ทริคหน้างาน OJT (Field Tricks)
-**💡 ข้อคิดจากรุ่นพี่:** ก่อนส่งแบบไปผลิต ให้เช็ค Gerber ด้วยตัวเองเสมอ อย่าเชื่อแค่ DRC ของโปรแกรม
+## ทริคหน้างาน OJT (On-the-Job Training Tricks)
+- **Senior Trick**: อย่าเอา Asynchronous Input ไปเข้า Logic Gate เพื่อตัดสินใจเปลี่ยน State โดยตรงเด็ดขาด! ให้ผ่าน 2-FF Synchronizer ก่อนเสมอ และใช้แอตทริบิวต์บอก Synthesis tool (เช่น `(* ASYNC_REG = "TRUE" *)` ใน Vivado) เพื่อบังคับให้ FF ทั้งสองตัววางติดกัน (Placement) ลด Routing Delay ระหว่างกันให้เหลือน้อยที่สุด
+- การทำ Debounce สำหรับปุ่มกด ก็เป็นส่วนหนึ่งของการจัดการ Asynchronous input เช่นกัน
 
-## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
-* 仕様書 (Shiyousho) - เอกสาร Spec
-* 評価 (Hyouka) - การประเมิน/ทดสอบ
-* ノイズ (Noizu) - สัญญาณรบกวน
+## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図 - Kenzu)
+- メタスタビリティ (Metasutabiriti) - Metastability
+- 非同期信号 (Hidouki Shingou) - Asynchronous Signal
+- 同期化 (Doukika) - Synchronization
+- 信頼性 (Shinraisei) - Reliability
+- チャタリング (Chataringu) - Bouncing (ปุ่มกด), Chattering
 
-## 4. ควิซท้ายบท (Quiz)
-**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ State Machine?
-**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ
+## ควิซท้ายบท (Quiz)
+**Q1**: ข้อใดคือวิธีที่ถูกต้องในการนำสัญญาณจาก Clock Domain 50MHz มาใช้เป็นเงื่อนไขใน FSM ที่ทำงานที่ 100MHz?
+1) ต่อตรงเข้า FSM ได้เลยเพราะความถี่ต่างกัน
+2) ผ่าน Inverter 1 ตัวก่อน
+3) ผ่าน 2-FF Synchronizer ที่ทำงานด้วย Clock 100MHz ก่อน
+4) ใช้ Combinational Logic แปลงสัญญาณ
+**เฉลย**: 3) ต้องผ่าน Synchronizer ใน Domain ปลายทางก่อนเสมอเพื่อป้องกัน Metastability

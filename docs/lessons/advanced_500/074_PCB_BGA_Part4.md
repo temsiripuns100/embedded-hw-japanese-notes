@@ -1,16 +1,24 @@
-# Advanced Lesson: PCB - BGA (Premium)
+# Lesson 074: BGA Signal Integrity & Crosstalk
 
-## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **BGA** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
+## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+สำหรับ High-Speed BGA (เช่น DDR4/5, PCIe Gen4/5) Signal Integrity (SI) เป็นเรื่องสำคัญที่สุด
+- **Crosstalk**: สัญญาณที่วิ่งขนานกันออกจาก BGA จะเกิด Electromagnetic Coupling กัน ทำให้เกิด NEXT (Near-End Crosstalk) และ FEXT (Far-End Crosstalk) ต้องควบคุมระยะห่าง (Spacing) ให้เหมาะสม (เช่น กฎ 3W)
+- **Return Path**: สัญญาณทุกเส้นต้องมี Return Path ที่ต่อเนื่อง หากมีการเปลี่ยนชั้น (Layer transition) ผ่าน Via ต้องวาง Ground Transfer Via (Stitching Via) ไว้ใกล้ๆ เสมอ เพื่อไม่ให้ Return Current ต้องอ้อมไกล ซึ่งจะเพิ่ม Loop Area และ EMI
 
-## 2. ทริคหน้างาน OJT (Field Tricks)
-**💡 ข้อคิดจากรุ่นพี่:** ปัญหา 80% หน้างานเกิดจาก Power Supply และ Grounding ที่ไม่ดี
+## ทริคหน้างาน OJT (OJT Field Tricks)
+- เวลาทำ Length Matching สำหรับ High-speed bus (เช่น DDR) ต้องนับความยาวรวมถึงความยาวของขา BGA ภายในตัวแพ็กเกจ (Package Length) ที่ผู้ผลิตระบุใน IBIS model ด้วย ไม่ใช่แค่บน PCB อย่างเดียว
+- ระวัง "Swiss Cheese Effect" ที่เกิดจากการเจาะ Via ถี่ๆ ใต้ BGA ซึ่งจะเจาะทำลาย Reference Plane ทำให้ Return Path ขาดตอน (Plane split)
 
-## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
-* 仕様書 (Shiyousho) - เอกสาร Spec
-* 評価 (Hyouka) - การประเมิน/ทดสอบ
-* ノイズ (Noizu) - สัญญาณรบกวน
+## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図 - Kenzu)
+- **クロストーク (Kurosutōku)** - Crosstalk
+- **リターンパス (Ritān pasu)** - Return Path
+- **等長配線 (Tōchō haisen)** - Length Matching
+- **インピーダンス整合 (Inpīdansu seigō)** - Impedance Matching
+- **層間移動 (Sōkan idō)** - Layer Transition
 
-## 4. ควิซท้ายบท (Quiz)
-**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ BGA?
-**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ
+## ควิซท้ายบท (Quiz)
+**คำถาม:** "Swiss Cheese Effect" บริเวณใต้ BGA ส่งผลเสียต่อสัญญาณ High-speed อย่างไร?
+<details>
+<summary>ดูเฉลย</summary>
+**คำตอบ:** การมีรู Via จำนวนมากทำให้ Reference Plane ถูกตัดขาด (Anti-pads ซ้อนทับกัน) ทำให้ Return Path ไม่ต่อเนื่อง เพิ่ม Impedance ชั่วขณะ และทำให้เกิดปัญหา Signal Integrity และ EMI
+</details>

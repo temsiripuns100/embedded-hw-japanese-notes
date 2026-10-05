@@ -1,16 +1,21 @@
-# Advanced Lesson: PCB - DFA (Premium)
+# 094 - PCB DFA Part 4: Panelization and Depaneling Techniques
 
-## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **DFA** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
+## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+การทำ Panelization (การจัดเรียงหลายๆ บอร์ดเล็กให้เป็นแผงใหญ่) ช่วยเพิ่ม Throughput ในสายการผลิต มี 2 วิธีหลักคือ V-Score และ Route/Tab (Mouse Bites)
+- **V-Score:** เหมาะสำหรับบอร์ดสี่เหลี่ยม ข้อดีคือหักง่าย ใช้พื้นที่น้อย แต่ข้อเสียคือโครงสร้างบอร์ดจะอ่อนแอลง และตอนหักอาจเกิด Mechanical Stress กระทบอุปกรณ์ใกล้เคียง
+- **Route/Tab:** ใช้สำหรับบอร์ดรูปร่างอิสระ สามารถกำหนดตำแหน่งจุดหักได้ แต่ต้องระวังขอบบอร์ดไม่เรียบหลังจากหัก
 
-## 2. ทริคหน้างาน OJT (Field Tricks)
-**💡 ข้อคิดจากรุ่นพี่:** ปัญหา 80% หน้างานเกิดจาก Power Supply และ Grounding ที่ไม่ดี
+## ทริคหน้างาน OJT (OJT Field Tricks)
+- **Keep-out Zone for Routing:** อุปกรณ์ที่เปราะบาง เช่น MLCC (Ceramic Capacitors) ห้ามวางขนานและชิดกับแนวรอยหัก (V-Cut หรือ Tab) เด็ดขาด เพราะตอน Depaneling แรงบิด (Bending Stress) จะทำให้ MLCC ร้าว (Micro-crack) ภายใน ซึ่งทดสอบผ่านในโรงงานแต่ไปเสียที่มือลูกค้า (Field Failure) ควรวางทำมุม 90 องศากับรอยหัก หรือห่างออกมาอย่างน้อย 5mm
+- **Tooling Holes:** ขอบ Panel ต้องมี Tooling Holes อย่างน้อยฝั่งละ 2 รู สำหรับล็อคบอร์ดให้อยู่กับที่ตอนผ่านกระบวนการต่างๆ
 
-## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
-* 歩留まり (Budomari) - Yield rate
-* 故障 (Koshou) - การเสีย/ชำรุด
-* 妥当性 (Datousei) - ความสมเหตุสมผล (Validity)
+## คำศัพท์ภาษาญี่ปุ่นในการตรวจแบบ (検図用語 - Kenzu Yōgo)
+- **面付け (Mentsuke):** Panelization / การจัดเรียงบอร์ดเป็นแผง
+- **捨て基板 (Sute Kiban):** Breakaway tab, Waste edge / ขอบบอร์ดที่ทิ้งไปหลังจากการหัก
+- **Vカット (Bui-katto):** V-Score / รอยบากรูปตัววี
+- **ミシン目 (Mishin-me):** Mouse bites, Stamp holes / รูเจาะเรียงกันเหมือนรอยปรุเพื่อให้หักง่าย
+- **割れ (Ware):** Crack, Breakage / รอยร้าว (มักใช้กับอุปกรณ์เซรามิก)
 
-## 4. ควิซท้ายบท (Quiz)
-**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ DFA?
-**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ
+## ควิซท้ายบท (Quiz)
+1. หากจำเป็นต้องวาง MLCC ใกล้กับแนว V-Cut ควรวางขนานหรือตั้งฉากกับแนว V-Cut? เพราะเหตุใด?
+2. ข้อได้เปรียบหลักของการใช้ Mouse Bites เทียบกับ V-Cut คืออะไร?

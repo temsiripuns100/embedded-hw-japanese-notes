@@ -1,16 +1,21 @@
-# Advanced Lesson: FPGA - VHDL (Premium)
+# Lesson 113: Clock Domain Crossing (CDC) Techniques
 
-## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **VHDL** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
+## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+Clock Domain Crossing (CDC) เป็นสาเหตุอันดับหนึ่งของความล้มเหลวแบบสุ่มในระบบจริง การส่งสัญญาณระหว่าง Clock Domains ที่ไม่สัมพันธ์กัน (Asynchronous) จะทำให้เกิด Metastability
+วิธีแก้สำหรับ Single-bit คือการใช้ 2-stage หรือ 3-stage Synchronizer
+สำหรับ Multi-bit ต้องใช้วิธี Gray Code Handshake หรือ Asynchronous FIFO ห้ามส่งสัญญาณหลายบิตผ่าน Synchronizer ธรรมดาเด็ดขาดเพราะจะเกิด Data Coherency Issue (Data Skew)
 
-## 2. ทริคหน้างาน OJT (Field Tricks)
-**💡 ข้อคิดจากรุ่นพี่:** ถ้าเจอปัญหาแปลกๆ ให้ลองจับอุณหภูมิดู บางทีเกิดจาก Thermal Runaway
+## ทริคหน้างาน OJT (On-the-Job Training Tricks)
+- **MTBF Calculation:** ทำความเข้าใจ Mean Time Between Failures สำหรับระบบความปลอดภัยสูง
+- **CDC Tool Check:** ห้ามปล่อยผ่าน Warnings จาก CDC Analysis Tools (เช่น SpyGlass) เด็ดขาด
+- **False Path:** อย่าลืมใส่คำสั่ง `set_false_path` หรือ `set_clock_groups` ในไฟล์ SDC สำหรับสัญญาณที่มี Synchronizer แล้ว เพื่อให้เครื่องมือไม่เสียเวลาวิเคราะห์ Timing
 
-## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
-* 歩留まり (Budomari) - Yield rate
-* 故障 (Koshou) - การเสีย/ชำรุด
-* 妥当性 (Datousei) - ความสมเหตุสมผล (Validity)
+## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図 - Kenzu)
+- **非同期 (Hidouki):** Asynchronous (อซิงโครนัส)
+- **メタスタビリティ (Metasutabiriti):** Metastability (ความไม่เสถียร)
+- **クロック乗り換え (Kurokku Norikae):** Clock Domain Crossing (CDC)
+- **誤動作 (Godosah):** Malfunction (การทำงานผิดปกติ)
 
-## 4. ควิซท้ายบท (Quiz)
-**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ VHDL?
-**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ
+## ควิซท้ายบท (Quiz)
+1. เหตุใดจึงไม่สามารถใช้ 2-stage Synchronizer กับข้อมูลขนาด 8-bit โดยตรงได้?
+2. จงอธิบายความหมายของ クロック乗り換え ในบริบทของการออกแบบชิป

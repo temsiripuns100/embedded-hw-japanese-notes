@@ -1,16 +1,21 @@
-# Advanced Lesson: FPGA - VHDL (Premium)
+# Lesson 111: FPGA Architecture & VHDL Fundamentals (Senior Level)
 
-## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **VHDL** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
+## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+ในระดับ Senior เราไม่ได้มองแค่โค้ด VHDL เป็นเพียงซอฟต์แวร์ แต่มันคือฮาร์ดแวร์ การทำความเข้าใจโครงสร้างภายในของ FPGA (Look-Up Tables, Flip-Flops, Routing Matrix, DSP slices, และ Block RAMs) เป็นสิ่งสำคัญในการเขียนโค้ดที่สามารถทำ Synthesis และ Place & Route ได้อย่างมีประสิทธิภาพ 
+การเขียน VHDL ที่ดีต้องคำนึงถึง Inferencing เสมอ ว่าโค้ดที่เราเขียนจะถูกตีความเป็นฮาร์ดแวร์ชิ้นไหนในชิปจริง
 
-## 2. ทริคหน้างาน OJT (Field Tricks)
-**💡 ข้อคิดจากรุ่นพี่:** การใช้ Probe วัดสัญญาณ High-speed ต้องใช้สายกราวด์สั้นที่สุด (Spring ground) ไม่งั้นจะเห็น Ringing ปลอม
+## ทริคหน้างาน OJT (On-the-Job Training Tricks)
+- **Avoid Latch Inferencing:** ห้ามลืมปิดเคสใน `case` หรือ `if-else` เพราะจะทำให้เกิด Unintentional Latches ซึ่งส่งผลร้ายแรงต่อ Timing Analysis
+- **Register All Outputs:** เพื่อป้องกัน Glitch และทำให้ Timing ดีขึ้น ควร Register สัญญาณขาออกทุกครั้ง (Pipelining)
+- **Hierarchy Design:** ออกแบบเป็นโมดูลย่อยๆ และใช้ `generate` statement สำหรับโครงสร้างที่ซ้ำซาก เพื่อลดความซ้ำซ้อนของโค้ด
 
-## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
-* 歩留まり (Budomari) - Yield rate
-* 故障 (Koshou) - การเสีย/ชำรุด
-* 妥当性 (Datousei) - ความสมเหตุสมผล (Validity)
+## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図 - Kenzu)
+- **論理合成 (Rongi Gousei):** Logic Synthesis (การสังเคราะห์ลอจิก)
+- **配置配線 (Haichi Haisen):** Place and Route (การจัดวางและเดินสายสัญญาณ)
+- **組み合わせ回路 (Kumiawase Kairo):** Combinational Logic (วงจรเชิงผสม)
+- **順序回路 (Junjo Kairo):** Sequential Logic (วงจรลำดับ)
+- **ラッチ発生 (Latchi Hassei):** Latch Generation (การเกิด Latch)
 
-## 4. ควิซท้ายบท (Quiz)
-**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ VHDL?
-**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ
+## ควิซท้ายบท (Quiz)
+1. การเกิด Latch ที่ไม่ได้ตั้งใจใน VHDL มักเกิดจากสาเหตุใด? (คำตอบ: การระบุเงื่อนไขในกระบวนการแบบ Combinational ไม่ครบถ้วน)
+2. อธิบายความแตกต่างระหว่าง 論理合成 และ 配置配線

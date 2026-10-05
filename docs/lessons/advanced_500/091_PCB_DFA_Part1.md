@@ -1,16 +1,19 @@
-# Advanced Lesson: PCB - DFA (Premium)
+# 091 - PCB DFA Part 1: Component Placement & Clearance (การจัดวางอุปกรณ์และระยะห่าง)
 
-## 1. ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-ในระดับ Senior Engineer การออกแบบ FPGA จะเน้นไปที่การลด Propagation Delay และการทำ Timing Closure ให้ผ่านในทุกๆ PVT (Process, Voltage, Temperature) corners การใช้งานรีซอร์สอย่าง BRAM และ DSP ต้องพิจารณา Pipeline registers เพื่อลด Critical path delay. ในหัวข้อ **DFA** นี้ เราจะต้องพิจารณาตัวแปรแฝงต่างๆ (Parasitic elements) ที่ส่งผลกระทบต่อระบบโดยรวมอย่างหลีกเลี่ยงไม่ได้.
+## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
+การออกแบบเพื่อการประกอบ (Design for Assembly - DFA) เริ่มต้นจากการจัดวางอุปกรณ์ (Component Placement) ที่ถูกต้อง ระยะห่างระหว่างอุปกรณ์ (Clearance) ไม่ได้กำหนดแค่เพื่อป้องกันการช็อต แต่ต้องเผื่อระยะสำหรับหัว Nozzle ของเครื่อง Pick and Place (Mounter) และลด Shadow Effect เวลาผ่านเครื่อง Wave Soldering หรือ IR Reflow ทิศทางของ IC ควรจัดให้ไปในทิศทางเดียวกัน (Same Orientation) เพื่อลดเวลาในการหมุนหัว Nozzle และลดข้อผิดพลาดในการตรวจสอบ AOI
 
-## 2. ทริคหน้างาน OJT (Field Tricks)
-**💡 ข้อคิดจากรุ่นพี่:** การใช้ Probe วัดสัญญาณ High-speed ต้องใช้สายกราวด์สั้นที่สุด (Spring ground) ไม่งั้นจะเห็น Ringing ปลอม
+## ทริคหน้างาน OJT (OJT Field Tricks)
+- **Shadow Effect Rule:** อุปกรณ์ตัวเตี้ยต้องไม่ถูกบังโดยอุปกรณ์ตัวสูงที่อยู่ด้านหน้าทิศทางการไหลของ Wave solder กฎทั่วไปคือระยะห่างต้องมากกว่าครึ่งหนึ่งของความสูงอุปกรณ์ตัวที่สูงกว่า
+- **Nozzle Clearance:** พวกคอนเนคเตอร์ขนาดใหญ่ ต้องเช็คเสมอว่าระยะประชิดมีอุปกรณ์ SMD เล็กๆ (เช่น 0402) หรือไม่ เพราะหัว Nozzle ขนาดใหญ่อาจจะไปกระแทกอุปกรณ์เล็กๆ ตอนลงเครื่อง Mounter
 
-## 3. คำศัพท์ภาษาญี่ปุ่นสำหรับตรวจแบบ (検図用語)
-* 信頼性 (Shinraisei) - ความน่าเชื่อถือ (Reliability)
-* 解析 (Kaiseki) - การวิเคราะห์
-* 手戻り (Temodori) - การทำงานซ้ำ/รื้อทำใหม่
+## คำศัพท์ภาษาญี่ปุ่นในการตรวจแบบ (検図用語 - Kenzu Yōgo)
+- **部品配置 (Buhin Haichi):** Component Placement / การจัดวางอุปกรณ์
+- **実装 (Jissō):** Mounting, Assembly / การประกอบลงบอร์ด
+- **干渉 (Kanshō):** Interference, Collision / การชนกันหรือการทับซ้อนกันของอุปกรณ์
+- **極性 (Kyokusei):** Polarity / ขั้ว (เช่น ไดโอด, คาปาซิเตอร์) - "極性を揃える" (จัดขั้วให้ตรงกัน)
 
-## 4. ควิซท้ายบท (Quiz)
-**Q:** ปัจจัยใดที่สำคัญที่สุดเมื่อต้องทำ Design Review ในหัวข้อ DFA?
-**A:** การตรวจสอบเอกสารอ้างอิงและขีดจำกัดสูงสุด (Maximum Ratings) ของระบบ
+## ควิซท้ายบท (Quiz)
+1. ทำไมเราถึงต้องจัดวางอุปกรณ์ประเภทเดียวกันให้อยู่ในทิศทางเดียวกัน?
+2. Shadow Effect ในกระบวนการ Wave Soldering เกิดจากอะไร และแก้ไขในขั้นตอนออกแบบอย่างไร?
+*(ลองคิดคำตอบก่อนไปบทถัดไป)*
