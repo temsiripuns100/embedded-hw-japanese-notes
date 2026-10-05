@@ -1,26 +1,298 @@
-# PCB Decoupling Part 6: PDN Impedance Optimization
+# Lesson 066: PCB Decoupling Part 6 - Advanced PDN Impedance Optimization and Capacitor Sizing Algorithms
 
-## ทฤษฎีวิศวกรรมเชิงลึก (Deep Engineering Theory)
-Power Delivery Network (PDN) Impedance Optimization คือการออกแบบโครงข่ายจ่ายไฟให้มีค่า Impedance ($Z_{PDN}$) ต่ำกว่า Target Impedance ($Z_{target}$) ในทุกช่วงความถี่ใช้งานจนถึงความถี่สูงสุดที่วงจรตอบสนอง (Bandwidth)
-สมการ: $Z_{target} = \frac{\Delta V}{I_{transient}}$
-การเลือกใช้ตัวเก็บประจุ (Capacitors) ในโครงข่าย PDN ไม่ใช่เพียงการเพิ่มความจุ (Capacitance) แต่คือการจัดการกับ ESL (Equivalent Series Inductance) และ ESR (Equivalent Series Resistance) เพื่อควบคุมพฤติกรรมในโดเมนความถี่
+---
 
-## ทริคหน้างาน OJT (On-the-Job Training Tricks)
-- **การวาง C แบบ Multi-value:** ไม่ควรวางค่า C ต่างกันมากๆ (เช่น 10uF คู่กับ 100pF) โดยไม่คำนึงถึง ESR เพราะอาจเกิด Peak ของ Antiresonance ที่ทำให้ PDN Impedance พุ่งสูงในย่านความถี่เฉพาะ แนะนำให้ดู Simulation ใน HyperLynx หรือ SIwave ก่อนตัดสินใจ
-- **การวางขั้ว (Via placement):** พยายามเจาะ Via ให้ใกล้ Pad ของ C มากที่สุด และให้ขั้วบวกและลบอยู่ชิดกัน (Side-by-side or end-to-end close vias) เพื่อทำ Mutual Inductance cancellation ซึ่งจะช่วยลด ESL โดยรวม
+## 1. ทฤษฎีวิศวกรรมเชิงลึก (高度なエンジニアリング理論)
 
-## คำศัพท์ภาษาญี่ปุ่นที่ใช้ในการตรวจแบบ (検図 - Kenzu)
-1. **Target Impedance:** 目標インピーダンス (Mokuhyou inpiidansu)
-2. **Transient Current:** 過渡電流 (Kato denryuu)
-3. **Decoupling Capacitor:** パスコン (Pasukon - Bypass Capacitor)
-4. **Antiresonance:** 反共振 (Hankyoushin)
-5. **Via Placement:** ビア配置 (Bia haichi)
+ในการออกแบบฮาร์ดแวร์ระดับโปรดักชันเชิงพาณิชย์ (High-Volume Production) การทำให้โครงข่ายจ่ายไฟ (PDN) มีอิมพีแดนซ์ต่ำกว่าเป้าหมาย ($Z_{PDN}(f) \le Z_{target}$) เป็นเพียงเงื่อนไขเบื้องต้นเท่านั้น ความท้าทายที่แท้จริงของ Senior Hardware Architect คือ **การหาจุดเหมาะสมที่สุด (Optimization)**: ทำอย่างไรจึงจะใช้อุปกรณ์ตัวเก็บประจุน้อยที่สุด (Minimum BOM Count), ใช้พื้นที่บนแผ่น PCB น้อยที่สุด (Minimum Board Footprint), และลดต้นทุนการผลิตโดยรวม (Lowest Total BOM Cost) โดยไม่สูญเสียความน่าเชื่อถือและความทนทานต่อสัญญาณรบกวน
 
-## ควิซท้ายบท (Quiz)
-**คำถาม:** การเจาะ Via แบบใดช่วยลด ESL ได้ดีที่สุดสำหรับ Decoupling Capacitor ขนาด 0402?
-1. เจาะแยกไกลๆ เพื่อลดสัญญาณรบกวน
-2. เจาะ Via ด้านข้าง Pad ทันทีและให้ Via ของ VCC/GND ชิดกัน
-3. ใช้ Via ขนาดใหญ่ที่สุดเพียง 1 รูตรงกลาง
-4. เดิน Trace ยาวๆ แล้วค่อยเจาะ Via
+```
++-------------------------------------------------------------------------+
+|                  PDN Multi-Objective Optimization Space                 |
+|                                                                         |
+|     Minimize: Cost = Σ (Unit_Cost_i * N_i) + Placement_Area_Cost        |
+|     Subject to Constraints:                                             |
+|       1. |Z_PDN(f)| <= Z_target(f)       for all f in [DC, f_max]       |
+|       2. Peak Anti-Resonance Margin     >= 20%                         |
+|       3. Maximum Mounting Area Under BGA <= A_available                 |
+|       4. Total Capacitance >= C_min     (Transient Charge Reservoir)    |
++-------------------------------------------------------------------------+
+```
 
-*เฉลย:* ข้อ 2 (เจาะ Via ด้านข้าง Pad ทันทีและให้ Via ของ VCC/GND ชิดกัน) เพื่อให้เกิด Mutual Inductance cancellation
+### 1.1 คณิตศาสตร์ของฟังก์ชันการปรับปรุง PDN ให้เหมาะสม (Mathematical Formulation of PDN Synthesis)
+
+ปัญหาการคัดเลือกตัวเก็บประจุในโครงข่าย PDN สามารถจัดรูปเป็นปัญหาการหาค่าเหมาะสมที่สุดแบบไม่เชิงเส้นและไม่ต่อเนื่อง (Nonlinear Mixed-Integer Programming):
+
+$$\min \quad J = \sum_{i=1}^{M} w_i \cdot N_i$$
+
+ภายใต้เงื่อนไขบังคับ (Constraints):
+1. **อิมพีแดนซ์ต้องไม่เกินเป้าหมาย:**
+   $$|Z_{PDN}(f_k, \{N_i\})| \le Z_{target}(f_k) \quad \forall f_k \in [f_{min}, f_{max}]$$
+2. **ขอบเขตพื้นที่และจำนวนชิ้นส่วน:**
+   $$N_i \in \mathbb{Z}^+, \quad \sum_{i=1}^{M} N_i \cdot A_{footprint, i} \le A_{max}$$
+
+โดยที่อิมพีแดนซ์รวมของระบบคำนวณจากแอดมิตแตนซ์ของทุกสาขาขนานกัน:
+
+$$Y_{PDN}(s) = Y_{VRM}(s) + Y_{plane}(s) + \sum_{i=1}^{M} N_i \cdot Y_{cap, i}(s)$$
+
+$$Z_{PDN}(s) = \frac{1}{Y_{PDN}(s)}$$
+
+โดยที่แอดมิตแตนซ์ของตัวเก็บประจุชนิดที่ $i$ แต่ละตัวคำนวณจากโมเดล RLC ที่รวมความเหนี่ยวนำของการติดตั้ง (Mounting Inductance: $L_{mount}$):
+
+$$Y_{cap, i}(s) = \frac{1}{ESR_i + s \cdot (ESL_i + L_{mount, i}) + \frac{1}{s \cdot C_{eff, i}(V_{DC})}}$$
+
+เครื่องมือจำลอง PI ชั้นนำ (เช่น Cadence Sigrity OptimizePI หรือ Ansys SIwave PDN Optimizer) ใช้อัลกอริทึมเชิงพันธุกรรม (Genetic Algorithms: GA) หรือการจำลองการเย็นตัว (Simulated Annealing) กวาดเลือกรายการอุปกรณ์จาก Library ของผู้ผลิตนับพันรายการ เพื่อตัดชิ้นส่วนที่ซ้ำซ้อนออกและบีบยอด Anti-Resonance ให้ราบเรียบ
+
+### 1.2 วิธีการปรับปรุงด้วยตัวเก็บประจุเสมือน (Novak's Equivalent Capacitor Synthesis Method)
+
+ดร. อิชต์วาน โนวัก (Dr. Istvan Novak) ได้เสนอระเบียบวิธีวิเคราะห์เพื่อหาขนาดความจุขั้นต่ำโดยไม่จำเป็นต้องรันอัลกอริทึมที่ซับซ้อน โดยแบ่งการตอบสนองออกเป็น 3 ช่วงความถี่หลัก:
+
+```
+Impedance |Z| (Ohms)
+ ▲
+ │  VRM Control Region     Bulk / Mid MLCC Region      Plane & High-f MLCC
+ │  (f < f_VRM)            (f_VRM < f < f_cross)       (f > f_cross)
+ │  \                                                /
+ │   \   Slope = -20 dB/dec                         / Slope = +20 dB/dec
+ │    \  (Governed by C_bulk)                      /  (Governed by ESL_eff)
+ ├─────\──────────────────────────────────────────/──────────────── Z_target
+ │      \                                        /
+ │       ' ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ' (Flat Bottom Floor)
+ └───────┴──────────────────────────────────────┴────────────────► Frequency (Hz)
+        f_VRM                                  f_cross
+```
+
+1. **การหาค่าความจุรวมขั้นต่ำ ($C_{bulk, min}$):** 
+   ที่จุดความถี่ข้ามของลูป VRM ($f_{VRM} \approx 50\text{ kHz} - 200\text{ kHz}$) อิมพีแดนซ์ถูกกำหนดโดยความจุรวม:
+   $$Z(f_{VRM}) = \frac{1}{2\pi f_{VRM} \cdot C_{total}} \le Z_{target} \implies C_{total, min} \ge \frac{1}{2\pi f_{VRM} \cdot Z_{target}}$$
+
+2. **การหาค่าความเหนี่ยวนำรวมสูงสุดที่ยอมรับได้ ($L_{eff, max}$):**
+   ที่ความถี่ตัดสูงสุดของบอร์ด ($f_{cutoff} \approx 100\text{ MHz} - 200\text{ MHz}$) อิมพีแดนซ์ถูกครอบงำโดยความเหนี่ยวนำรวมของ MLCC ขนานกัน:
+   $$Z(f_{cutoff}) = 2\pi f_{cutoff} \cdot L_{eff} \le Z_{target} \implies L_{eff, max} \le \frac{Z_{target}}{2\pi f_{cutoff}}$$
+
+3. **การคำนวณจำนวนตัวเก็บประจุขั้นต่ำ ($N_{min}$):**
+   หากตัวเก็บประจุแต่ละตัวมีความเหนี่ยวนำรวมจากการติดตั้ง $L_{unit} = ESL + L_{mount}$:
+   $$N_{min} \ge \frac{L_{unit}}{L_{eff, max}} = \frac{L_{unit} \cdot 2\pi f_{cutoff}}{Z_{target}}$$
+
+สมการนี้คือแก่นแท้ของการออกแบบ PDN: **จำนวนตัวเก็บประจุถูกกำหนดโดยความเหนี่ยวนำ ($L_{unit}$) ไม่ใช่ความจุ ($C$)!** หากเราสามารถลด $L_{unit}$ ลงได้ครึ่งหนึ่ง จำนวนตัวเก็บประจุที่ต้องใช้บนบอร์ดจะลดลงทันที $50\%$
+
+---
+
+## 2. ทริคหน้างาน OJT แบบ Step-by-Step (現場の実践テクニック)
+
+### กรณีศึกษาความล้มเหลวหน้างาน: 失敗事例 (Shippai Jirei)
+
+**เหตุการณ์:** เมนบอร์ดระบบประมวลผลเซิร์ฟเวอร์แบบ Edge AI Accelerator ใช้ GPU ขนาดใหญ่ (กำลังไฟคอร์ $180\text{ W}$, $V_{DD} = 0.80\text{ V}$, $I_{max} = 150\text{ A}$) บอร์ดใช้พื้นที่ใต้ BGA อย่างหนาแน่นมาก 
+
+**อาการล้มเหลว:**
+1. ในขั้นตอนการออกแบบรอบแรก ทีมวิศวกรใส่ตัวเก็บประจุ Decoupling ทั้งหมดรวมกันถึง **184 ตัว** (ประกอบด้วย 10 ชนิดค่าความจุต่างกัน) เพื่อให้มั่นใจว่าจะผ่านการจำลอง $Z_{target} = 0.65\text{ m}\Omega$
+2. ปัญหาหน้างานเกิดขึ้นทันทีในขั้นตอนการออกแบบแผ่นวงจร (PCB Layout): พื้นที่ใต้ BGA แน่นขนัดจนไม่มีช่องว่างให้เดินลายสัญญาณ High-Speed PCIe Gen 5 และ LPDDR5 (Escape Routing Choke) ส่งผลให้วิศวกรเลย์เอาต์ต้องเพิ่มจำนวนเลเยอร์บอร์ดจาก 12 ชั้นเป็น 16 ชั้น ซึ่งทำให้ต้นทุนบอร์ดพุ่งสูงขึ้น $+22\text{ USD}$ ต่อแผ่น
+3. นอกจากนี้ ในการทดสอบบอร์ดล็อตแรก อุปกรณ์เกิดปัญหาบัดกรีไม่ติด (Solder Bridging / Solder Tombstoning) ถึง $4.5\%$ ในกระบวนการ SMT เนื่องจากตัวเก็บประจุ 0201 วางชิดกันเกินไป ($< 0.15\text{ mm}$ spacing)
+
+```
+[The Over-Engineering Crisis]
+Initial Design:  184 Capacitors (10 different values!)
+                 - Board bloated from 12 layers to 16 layers (+$22/unit!)
+                 - High SMT defect rate (4.5% solder bridges)
+                 - Severe Anti-resonance peaks between 10 values!
+
+Optimized Design: 48 Capacitors (Only 2 uniform values: 22µF 0603 + 2.2µF 0402)
+                 - Returned to 12 layers (-$22 cost saving!)
+                 - Zero SMT defect rate
+                 - Smooth, flat impedance profile!
+```
+
+**Root Cause Analysis (RCA):**
+1. **การออกแบบแบบยัดเยียดไร้หลักการ (Brute-Force Over-Design):** วิศวกรขาดความเข้าใจเรื่องระเบียบวิธี Optimization โดยคิดว่าการใส่ตัวเก็บประจุยิ่งมากยิ่งดี แต่ความจริงตัวเก็บประจุค่าเล็กๆ ($100\text{ pF} - 10\text{ nF}$) จำนวนกว่า 80 ตัว แทบไม่มีส่วนช่วยลดอิมพีแดนซ์ที่ความถี่ต่ำกว่า $100\text{ MHz}$ เลย เพราะถูกความเหนี่ยวนำของ Via บล็อกไว้หมด และยังมีผลเสียในการสร้าง Anti-Resonance
+2. **การเพิกเฉยต่อ Mutual Inductance Optimization:** วิศวกรใช้วิธีวาง Via แบบธรรมดา (Loop Inductance $\approx 1.2\text{ nH}$) หากเปลี่ยนไปใช้การวางแบบ Side-Via หรือ VIPPO ความเหนี่ยวนำจะลดลงเหลือ $0.3\text{ nH}$ ซึ่งจะลดจำนวนตัวเก็บประจุที่ต้องการลงได้ถึง 4 เท่าทันที
+
+---
+
+### Step-by-Step Engineering Checklist: กระบวนการทำ Optimization และตัดลด BOM ตัวเก็บประจุ
+
+#### ขั้นตอนที่ 1: การตัดชิ้นส่วนไร้ประโยชน์ออกจากระบบ (BOM Pruning Protocol)
+- **กฎข้อที่ 1:** ปลดตัวเก็บประจุที่มีค่าความจุต่ำกว่า $10\text{ nF}$ ออกจากรางจ่ายไฟคอร์ทั้งหมด (ตัด $100\text{ pF}, 470\text{ pF}, 1000\text{ pF}$ ทิ้ง $100\%$)
+- **กฎข้อที่ 2:** สำหรับย่านความถี่สูง ให้คงเหลือเฉพาะตัวเก็บประจุขนาดเล็กที่สุดที่มีค่าความจุสูงสุด (Highest Capacitance in Smallest Package) เช่น **$1.0\ \mu\text{F}$ หรือ $2.2\ \mu\text{F}$ ขนาด 0402** หรือ **$0.47\ \mu\text{F}$ ขนาด 0201**
+- **กฎข้อที่ 3:** ยุบรวมตัวเก็บประจุย่านกลางให้เหลือเพียงค่าเดียว เช่น **$22\ \mu\text{F}$ หรือ $47\ \mu\text{F}$ ขนาด 0603/0805**
+
+```
++-------------------------------------------------------------+
+|  Capacitor Rationalization Matrix:                          |
+|                                                             |
+|  Legacy Cluttered Array:        Modern Optimized Array:     |
+|   - 100 µF (x4)                  - 100 µF Bulk (x4)         |
+|   - 10 µF  (x8)                  - 22 µF 0603  (x12)        |
+|   - 1 µF   (x16)                 - 2.2 µF 0402 (x32)        |
+|   - 0.1 µF (x32)                                            |
+|   - 0.01 µF (x32)        ===>   Total: 48 Caps (3 Values)   |
+|   - 1000 pF (x32)               Reduced BOM by 72%!         |
+|   - 100 pF (x32)                                            |
+|  Total: 156 Caps (7 Values)                                 |
++-------------------------------------------------------------+
+```
+
+#### ขั้นตอนที่ 2: การคำนวณและปรับลดด้วยเทคนิค Via Optimization
+แทนที่จะเพิ่มจำนวนชิ้นส่วน ให้ปรับปรุงการวาง Via เพื่อลด $L_{unit}$:
+- เปลี่ยนจากการวาง Via ปลาย Pad (End-Via, $L \approx 1.0\text{ nH}$) ไปเป็นการวาง Via ขนาบข้าง (Side-Via, $L \approx 0.4\text{ nH}$) หรือ Via-in-Pad (VIPPO, $L \approx 0.2\text{ nH}$)
+- **สมการประหยัดชิ้นส่วน:**
+  $$\frac{N_{new}}{N_{old}} = \frac{L_{unit, new}}{L_{unit, old}} = \frac{0.3\text{ nH}}{1.2\text{ nH}} = 0.25$$
+  เพียงแค่เปลี่ยนโครงสร้าง Via ใต้ Pad สามารถลดจำนวนตัวเก็บประจุลงได้ถึง **$75\%$** ในทันที โดยที่ประสิทธิภาพอิมพีแดนซ์เท่าเดิมทุกประการ!
+
+#### ขั้นตอนที่ 3: การรัน PDN Optimizer Tool และการตรวจสอบความเค้นทางความร้อน (Thermal/SMT Check)
+- นำผลลัพธ์เข้าโปรแกรมจำลอง Sigrity OptimizePI หรือ SIwave เพื่อรันการจำลองแบบ Multi-weight Optimization
+- ตรวจสอบระยะห่างระหว่างชิ้นส่วนตามมาตรฐาน **IPC-7351B**: เว้นระยะห่างระหว่าง Component Body อย่างน้อย $0.25\text{ mm}$ สำหรับขนาด 0402 เพื่อให้หัวฉีด Pick & Place ทำงานได้และป้องกันการเกิด Solder Bridging
+
+---
+
+## 3. คำศัพท์และประโยคภาษาญี่ปุ่นสำหรับตรวจแบบ (検図 - Kenzu)
+
+### 3.1 ตารางคำศัพท์เทคนิคเฉพาะทาง (専門用語一覧)
+
+| คันจิ (Kanji) | คานะ (Kana) | คำอ่าน (Romaji) | ภาษาอังกฤษ / คำแปลภาษาไทย |
+| :--- | :--- | :--- | :--- |
+| **PDN最適化** | ぴーでぃーえぬさいてきか | Pī-Dī-Enu Saitekika | PDN Impedance Optimization |
+| **部品点数削減** | ぶひんてんすうさくげん | Buhin Tensū Sakugen | BOM Count Reduction (การลดจำนวนชิ้นส่วน) |
+| **実装密度** | じっそうみつど | Jissō Mitsudo | Component Placement Density |
+| **過剰設計** | かじょうせっけい | Kajō Sekkei | Over-Engineering / Over-Design |
+| **制約条件** | せいやくじょうけん | Seiyaku Jōken | Design Constraints (เงื่อนไขบังคับ) |
+| **目的関数** | もくてきかんすう | Mokuteki Kansū | Objective / Cost Function |
+| **引き通し配線スペース**| ひきとおしはいせんすぺーす | Hikitōshi Haisen Supēsu | Routing Channel Space under BGA |
+| **実装インダクタンス** | じっそういんだくたんす | Jissō Indakutansu | Total Mounting Inductance ($L_{mount}$) |
+| **同一容量化** | どういつようりょうか | Dōitsu Yōryō-ka | Component Value Rationalization / Unification |
+| **歩留まり向上** | ぶどまりこうじょう | Budomari Kōjō | SMT Yield Improvement |
+| **コスト削減** | こすとさくげん | Kosuto Sakugen | Cost Reduction / Value Engineering |
+| **解空間探索** | かいくうかんたんさく | Kai-kūkan Tansaku | Solution Space Exploration (Genetic Search) |
+
+---
+
+### 3.2 บันทึกการตรวจแบบของ Senior Engineer (検図指摘事項 - Kenzu Comments)
+
+#### คอมเมนต์ที่ 1: ตรวจพบการออกแบบตัวเก็บประจุมากเกินจำเป็น (Over-design) ขัดขวางทางเดินลายวงจร BGA
+> **検図指摘 (Kenzu Feedback 1):**  
+> 「GPUコア電源（$V_{DD} = 0.80\text{V}$、最大消費電流140A）のデカップリング設計を検図しました。BGA裏面エリアに合計168個のパスコン（0201サイズ $100\text{pF} \sim 0.1\mu\text{F}$、計8品種）が密集配置されていますが、これは典型的な過剰設計（Over-engineering）です。小容量MLCC（100pF〜10nF）群は実装ビアインダクタンス（約0.8nH）により高周波で完全に無効化されており、無駄に基板占有面積を圧迫して高速差動信号（PCIe Gen5）の引き出し配線流路（エスケープチャネル）を寸断しています。Sigrity OptimizePIによる最適化解析を実施した結果、0402サイズ $2.2\mu\text{F}$（VIPPO実装、寄生L $\le 0.25\text{nH}$）を44個、および周辺に0603サイズ $22\mu\text{F}$を12個配置するだけで、目標インピーダンス（$Z_{target} = 0.7\text{m}\Omega$）を全帯域で満たせることが判明しました。パスコン総数を168個から56個へ削減（BOM点数67%削減）し、配線チャネルを確保してください。」  
+> *(คำแปล: ตรวจสอบการออกแบบ Decoupling ของรางไฟ GPU Core (0.80V, 140A) ใต้ BGA พบว่ามีการวางตัวเก็บประจุอัดแน่นถึง 168 ตัว (ขนาด 0201 มี 8 ค่าตั้งแต่ 100pF ถึง 0.1µF) นี่เป็นการ Over-design ที่สิ้นเปลือง ตัวเก็บประจุค่าเล็ก (100pF-10nF) ถูกความเหนี่ยวนำของ Via บล็อกจนไร้ประโยชน์ และยังกินพื้นที่จนตัดขาดช่องเดินสายสัญญาณความเร็วสูง PCIe Gen5 ผลการรัน OptimizePI ชี้ว่าเพียงใช้ 0402 ขนาด 2.2µF แบบ VIPPO จำนวน 44 ตัว ร่วมกับ 0603 ขนาด 22µF จำนวน 12 ตัว ก็เพียงพอที่จะผ่าน Z_target = 0.7 mΩ ได้ตลอดทุกความถี่ ขอให้ลดจำนวนตัวเก็บประจุจาก 168 ตัวเหลือ 56 ตัว (ลด BOM ลง 67%) เพื่อเปิดพื้นที่เดินสายสัญญาณทันที)*
+
+#### คอมเมนต์ที่ 2: ปัญหาความหนาแน่นชิ้นส่วนสูงเกินไป เสี่ยงต่อการเกิดข้อบกพร่อง SMT
+> **検図指摘 (Kenzu Feedback 2):**  
+> 「BGA裏面パスコン配置のクリアランス設計について。0201コンデンサ相互の間隔が0.12mm（約4.7mils）しか確保されておらず、量産実装基準（IPC-7351Bおよび社内DFM規格：最小クリアランス0.20mm）に違反しています。この極小間隔では、リフローはんだ付け工程においてソルダーブリッジ（ショート不良）および部品立ち（ツームストーン現象）の発生率が急増し、量産歩留まりを著しく低下させます。部品点数の最適化（統合）を行い、コンデンサ間ピッチを最低0.25mm以上に広げてください。また、はんだ吸い込みを防止するため、レジストダム幅が最低$75\mu\text{m}$確保されていることを検図確認してください。」  
+> *(คำแปล: ตรวจสอบระยะห่างการวางตัวเก็บประจุใต้ BGA พบว่าระยะห่างระหว่างชิ้นส่วน 0201 มีเพียง 0.12 mm ละเมิดเกณฑ์มาตรฐาน DFM ของโรงงาน (IPC-7351B กำหนดขั้นต่ำ 0.20 mm) ช่องว่างที่แคบเกินไปนี้จะทำให้เกิดสะพานเชื่อมบัดกรีลัดวงจร (Solder Bridge) และอุปกรณ์กระดก (Tombstone) ในเตาอบ Reflow ส่งผลให้อัตราของเสีย SMT พุ่งสูง ขอให้ทำการปรับลดและยุบรวมจำนวนชิ้นส่วน ขยายระยะห่างระหว่างอุปกรณ์ให้ไม่น้อยกว่า 0.25 mm และตรวจสอบว่ามีแนว Solder Mask Dam กว้างอย่างน้อย 75 µm เพื่อป้องกันตะกั่วไหลเชื่อมกัน)*
+
+---
+
+## 4. ควิซวิเคราะห์ปัญหาระดับวิศวกรอาวุโส (上級技術クイズ)
+
+### คำถามที่ 1: การคำนวณจำนวนตัวเก็บประจุขั้นต่ำ ($N_{min}$) จากข้อจำกัดความเหนี่ยวนำและ Target Impedance
+
+ชิปประมวลผลเครือข่ายความเร็วสูงมีรางไฟคอร์ $V_{DD} = 0.85\text{ V}$ มีอัตราการดึงกระแสชั่วขณะ $\Delta I = 40\text{ A}$ และยอมรับแรงดันกระเพื่อมได้สูงสุด $\pm 3\%$ ($\Delta V = 25.5\text{ mV}$) แบนด์วิดท์สูงสุดที่ระบบ PDN บนบอร์ดต้องควบคุมคือ $f_{cutoff} = 120\text{ MHz}$
+
+วิศวกรต้องการเลือกใช้ตัวเก็บประจุ MLCC ขนาด 0402 ค่า $C = 1.0\ \mu\text{F}$ ซึ่งมีค่าความเหนี่ยวนำภายในตัวถัง $ESL_{cap} = 0.35\text{ nH}$ 
+
+เปรียบเทียบ 2 ทางเลือกในการออกแบบ Via:
+- **ทางเลือก A (Standard Fanout Via):** เจาะรู Via ห่างจาก Pad มีค่าความเหนี่ยวนำของการติดตั้ง $L_{mount, A} = 0.85\text{ nH}$ (ความเหนี่ยวนำรวมต่อตัว $L_{unit, A} = 1.20\text{ nH}$)
+- **ทางเลือก B (Via-in-Pad VIPPO):** เจาะรู Via ใน Pad โดยตรง มีค่าความเหนี่ยวนำของการติดตั้ง $L_{mount, B} = 0.05\text{ nH}$ (ความเหนี่ยวนำรวมต่อตัว $L_{unit, B} = 0.40\text{ nH}$)
+
+จงคำนวณ:
+1. ค่า Target Impedance ($Z_{target}$) และความเหนี่ยวนำประสิทธิผลรวมสูงสุด ($L_{eff, max}$) ที่ระบบยอมรับได้ที่ความถี่ $120\text{ MHz}$
+2. จำนวนตัวเก็บประจุขั้นต่ำที่ต้องใช้สำหรับทางเลือก A ($N_A$) และทางเลือก B ($N_B$)
+3. คำนวณเปอร์เซ็นต์ของจำนวนชิ้นส่วนและพื้นที่ที่ประหยัดได้เมื่อเปลี่ยนจากทางเลือก A เป็นทางเลือก B?
+
+#### เฉลยและบทวิเคราะห์เชิงลึก:
+
+**1. คำนวณ $Z_{target}$ และ $L_{eff, max}$:**
+- Target Impedance:
+  $$Z_{target} = \frac{\Delta V}{\Delta I} = \frac{0.0255\text{ V}}{40\text{ A}} = 0.0006375\ \Omega = 0.6375\text{ m}\Omega \ (637.5\ \mu\Omega)$$
+- ความเหนี่ยวนำประสิทธิผลสูงสุดที่ความถี่ $f_{cutoff} = 120\text{ MHz} = 1.2 \times 10^8\text{ Hz}$:
+  $$Z(f) = 2\pi f \cdot L_{eff} \le Z_{target}$$
+  $$L_{eff, max} = \frac{Z_{target}}{2\pi f_{cutoff}} = \frac{6.375 \times 10^{-4}\ \Omega}{2\pi \times (1.2 \times 10^8\text{ Hz})} = \frac{6.375 \times 10^{-4}}{7.5398 \times 10^8} \approx 8.455 \times 10^{-13}\text{ H} = 0.8455\text{ pH}$$
+
+ระบบต้องการความเหนี่ยวนำรวมของกลุ่มตัวเก็บประจุต่ำกว่า **$0.846\text{ pH}$!**
+
+**2. คำนวณจำนวนตัวเก็บประจุขั้นต่ำ ($N = \frac{L_{unit}}{L_{eff, max}}$):**
+- **ทางเลือก A ($L_{unit, A} = 1.20\text{ nH} = 1.20 \times 10^{-9}\text{ H}$):**
+  $$N_A \ge \frac{L_{unit, A}}{L_{eff, max}} = \frac{1.20 \times 10^{-9}\text{ H}}{8.455 \times 10^{-13}\text{ H}} \approx 1,419.3 \implies \mathbf{1,420\ \text{ตัว}}$$
+  *(ในความเป็นจริง การวางตัวเก็บประจุ 1,420 ตัวบนบอร์ดเดี่ยวเป็นไปไม่ได้ทางกายภาพ! แสดงว่าทางเลือก A ล้มเหลวโดยสิ้นเชิง)*
+
+- **ทางเลือก B ($L_{unit, B} = 0.40\text{ nH} = 4.0 \times 10^{-10}\text{ H}$):**
+  $$N_B \ge \frac{L_{unit, B}}{L_{eff, max}} = \frac{4.0 \times 10^{-10}\text{ H}}{8.455 \times 10^{-13}\text{ H}} \approx 473.1 \implies \mathbf{474\ \text{ตัว}}$$
+  *(หากเสริมด้วย Plane Capacitance ของแผ่นบอร์ดอีกครึ่งหนึ่ง จำนวนตัวเก็บประจุจริงจะลดลงเหลือเพียง $\approx 40 - 60\text{ ตัว}$ ใต้ BGA)*
+
+**3. บทวิเคราะห์เชิงเปรียบเทียบ:**
+- การลด $L_{unit}$ ลงจาก $1.20\text{ nH}$ เหลือ $0.40\text{ nH}$ (ลดลง 3 เท่า) ช่วยลดจำนวนตัวเก็บประจุลงได้ถึง **$66.7\%$**
+- แสดงให้เห็นว่าการพยายามเพิ่มตัวเก็บประจุโดยไม่ปรับปรุง Via Layout เป็นแนวทางที่ไร้ประโยชน์อย่างสิ้นเชิงในระบบ PDN ความเร็วสูง
+
+---
+
+### คำถามที่ 2: การคำนวณขนาดความจุ Bulk ขั้นต่ำตามกฎของ Novak เพื่อป้องกันการเกิด Gap ช่วงรอยต่อ VRM
+
+ระบบจ่ายไฟควบคุมด้วยชิป VRM สวิตชิ่งแบบ Multi-phase Buck Converter:
+- แรงดันเอาต์พุต: $V_{DD} = 1.0\text{ V}$
+- กระแสโหลดชั่วขณะ: $\Delta I = 30\text{ A}$
+- แรงดันกระเพื่อมที่ยอมรับได้: $\Delta V = 30\text{ mV} \implies Z_{target} = 1.0\text{ m}\Omega$
+- ความถี่แบนด์วิดท์ของลูปควบคุมของ VRM (Closed-Loop Crossover Frequency): $f_{c, VRM} = 80\text{ kHz}$
+- ความต้านทานเอาต์พุตกระแสตรงของ VRM: $R_{out, VRM} \approx 0.8\text{ m}\Omega$
+
+ณ ความถี่ $f_{c, VRM}$ วงจรควบคุมของ VRM จะเริ่มสูญเสียความสามารถในการรักษาระดับแรงดัน และตัวเก็บประจุ Bulk บนบอร์ดจะต้องเข้ามารับช่วงต่อทันที
+
+จงคำนวณ:
+1. ค่าความจุรวมขั้นต่ำ ($C_{bulk, min}$) ของกลุ่มตัวเก็บประจุ Bulk บนบอร์ด เพื่อให้อิมพีแดนซ์ ณ ความถี่ $f_{c, VRM} = 80\text{ kHz}$ ยังคงต่ำกว่า $Z_{target} = 1.0\text{ m}\Omega$
+2. หากเลือกใช้ตัวเก็บประจุแบบ Conductive Polymer Aluminum Solid Electrolytic ขนาด $330\ \mu\text{F}$ พิกัด $2.5\text{ V}$ ($ESR = 6\text{ m}\Omega$, $ESL = 1.5\text{ nH}$) จะต้องใช้จำนวนขั้นต่ำกี่ตัว ($N_{bulk}$)?
+3. ตรวจสอบว่าค่า ESR รวมของกลุ่มตัวเก็บประจุ Bulk ที่ได้ ($ESR_{total} = \frac{ESR}{N_{bulk}}$) ผ่านเกณฑ์ $Z_{target}$ หรือไม่?
+
+#### เฉลยและบทวิเคราะห์เชิงลึก:
+
+**1. คำนวณความจุ Bulk รวมขั้นต่ำ ($C_{bulk, min}$):**
+ณ จุดตัดความถี่ $f_{c, VRM} = 80\text{ kHz} = 8.0 \times 10^4\text{ Hz}$ ค่าอิมพีแดนซ์ของตัวเก็บประจุต้องไม่เกิน $Z_{target}$:
+$$Z = \frac{1}{2\pi f_{c, VRM} \cdot C_{bulk}} \le Z_{target}$$
+$$C_{bulk, min} \ge \frac{1}{2\pi f_{c, VRM} \cdot Z_{target}} = \frac{1}{2\pi \times (8.0 \times 10^4\text{ Hz}) \times (1.0 \times 10^{-3}\ \Omega)}$$
+$$C_{bulk, min} \ge \frac{1}{2\pi \times 80} = \frac{1}{502.65} \approx 1.989 \times 10^{-3}\text{ F} \approx 1,989\ \mu\text{F}$$
+
+ระบบต้องการความจุ Bulk ขั้นต่ำประมาณ **$2,000\ \mu\text{F}$**
+
+**2. คำนวณจำนวนตัวเก็บประจุ $330\ \mu\text{F}$ ที่ต้องใช้:**
+$$N_{bulk} = \frac{C_{bulk, min}}{C_{unit}} = \frac{1,989\ \mu\text{F}}{330\ \mu\text{F}} \approx 6.03 \implies \mathbf{7\ \text{ตัว}}$$
+*(ใช้ตัวเก็บประจุ Polymer $330\ \mu\text{F}$ จำนวน 7 ตัว ให้ความจุรวม $C_{total} = 7 \times 330 = 2,310\ \mu\text{F}$)*
+
+**3. ตรวจสอบค่า ESR รวม:**
+$$ESR_{total} = \frac{ESR_{unit}}{N_{bulk}} = \frac{6.0\text{ m}\Omega}{7} \approx 0.857\text{ m}\Omega$$
+- เปรียบเทียบกับเป้าหมาย: $ESR_{total} = 0.857\text{ m}\Omega \le Z_{target} = 1.0\text{ m}\Omega$
+- **ผลลัพธ์:** ผ่านเกณฑ์อย่างสมบูรณ์แบบ! ตัวเก็บประจุ 7 ตัวนี้ให้ทั้งความจุที่เพียงพอ ($> 2,000\ \mu\text{F}$) และมีค่า ESR รวมต่ำกว่า $1.0\text{ m}\Omega$ ช่วยป้องกันไม่ให้อิมพีแดนซ์ของระบบกระโดดขึ้นในช่วงรอยต่อของ VRM
+
+---
+
+### คำถามที่ 3: การประเมินพื้นที่และข้อจำกัด DFM ในการวางตัวเก็บประจุใต้ BGA
+
+ชิป BGA ขนาด $35\text{ mm} \times 35\text{ mm}$ มีระยะพิทช์ระหว่างบอลบัดกรี $P = 0.8\text{ mm}$ โดยมีพื้นที่เปิดโล่งใจกลางชิป (Center Cavity Keep-out Area) สำหรับวาง Decoupling Capacitors บน Bottom Layer ขนาด $12\text{ mm} \times 12\text{ mm}$ ($A_{total} = 144\text{ mm}^2$)
+
+วิศวกรเปรียบเทียบการเลือกใช้แพ็กเกจ 2 แบบ:
+- **แบบที่ 1 (ใช้ขนาด 0402):** ตัวถังขนาด $1.0\text{ mm} \times 0.5\text{ mm}$ ขนาด Pad บัดกรีพร้อมระยะเผื่อ SMT ตาม IPC-7351B ต้องการพื้นที่ Courtyard สำหรับแต่ละตัว $A_{courtyard, 1} = 1.6\text{ mm} \times 1.0\text{ mm} = 1.60\text{ mm}^2$
+- **แบบที่ 2 (ใช้ขนาด 0201):** ตัวถังขนาด $0.6\text{ mm} \times 0.3\text{ mm}$ ต้องการพื้นที่ Courtyard สำหรับแต่ละตัว $A_{courtyard, 2} = 1.0\text{ mm} \times 0.6\text{ mm} = 0.60\text{ mm}^2$
+
+หากการวิเคราะห์เชิงอิมพีแดนซ์ระบุว่า ต้องการความเหนี่ยวนำรวม $L_{eff} \le 15\text{ pH}$ โดยที่ตัวเก็บประจุ 0402 แต่ละตัวมี $L_{unit, 1} = 0.45\text{ nH}$ และ 0201 แต่ละตัวมี $L_{unit, 2} = 0.30\text{ nH}$
+
+จงคำนวณ:
+1. จำนวนตัวเก็บประจุที่ต้องการสำหรับแบบที่ 1 ($N_1$) และแบบที่ 2 ($N_2$)
+2. พื้นที่แผ่น PCB รวมที่ต้องใช้สำหรับแบบที่ 1 ($A_{req, 1}$) และแบบที่ 2 ($A_{req, 2}$)
+3. สรุปว่าแบบใดสามารถติดตั้งลงในพื้นที่ Center Cavity ($144\text{ mm}^2$) ได้จริง และแบบใดจะล้นพื้นที่จนต้องย้ายออกไปนอก BGA?
+
+#### เฉลยและบทวิเคราะห์เชิงลึก:
+
+**1. คำนวณจำนวนตัวเก็บประจุที่ต้องการ ($N \ge \frac{L_{unit}}{L_{eff}}$):**
+- **แบบที่ 1 (0402):**
+  $$N_1 \ge \frac{0.45\text{ nH}}{0.015\text{ nH}} = 30\text{ ตัว}$$
+- **แบบที่ 2 (0201):**
+  $$N_2 \ge \frac{0.30\text{ nH}}{0.015\text{ nH}} = 20\text{ ตัว}$$
+
+**2. คำนวณพื้นที่ Courtyard รวมที่ต้องใช้:**
+- **แบบที่ 1 (30 ตัว x 0402 Courtyard $1.60\text{ mm}^2$):**
+  $$A_{req, 1} = 30 \times 1.60\text{ mm}^2 = 48.0\text{ mm}^2$$
+- **แบบที่ 2 (20 ตัว x 0201 Courtyard $0.60\text{ mm}^2$):**
+  $$A_{req, 2} = 20 \times 0.60\text{ mm}^2 = 12.0\text{ mm}^2$$
+
+**3. การวิเคราะห์พื้นที่จริงร่วมกับ Routing Channels และ Via Grid:**
+- แม้ว่าตัวเลขทางทฤษฎี ($48\text{ mm}^2$ และ $12\text{ mm}^2$) จะดูเหมือนต่ำกว่าพื้นที่ว่าง ($144\text{ mm}^2$) แต่ในความเป็นจริง:
+  - ใต้ BGA พิทช์ $0.8\text{ mm}$ รูเจาะ Fanout Vias และ Anti-pads จะกินพื้นที่ไปมากกว่า **$65\% - 70\%$** ของพื้นที่ทั้งหมด
+  - พื้นที่ว่างจริงที่สามารถวางชิ้นส่วน SMT ได้โดยไม่ชนกับ Fanout Vias มีไม่เกิน $25\% - 30\%$ ของพื้นที่ Cavity ($\approx 36 - 43\text{ mm}^2$)
+- **บทสรุปของ Senior Engineer:**
+  - แบบที่ 1 (0402) ต้องการพื้นที่ $48.0\text{ mm}^2$ ซึ่ง **ล้นเกินพื้นที่ว่างจริง ($> 43\text{ mm}^2$)** ทำให้ไม่สามารถวางได้ครบ 30 ตัว ตัวเก็บประจุส่วนเกินจะต้องถูกผลักออกไปอยู่นอกขอบ BGA ซึ่งจะเพิ่ม Loop Inductance จนระบบล้มเหลว
+  - แบบที่ 2 (0201) ต้องการพื้นที่เพียง $12.0\text{ mm}^2$ ซึ่งสามารถวางลงใต้ท้อง BGA ได้อย่างสบายๆ และยังเหลือพื้นที่ให้ความร้อนระบายออกและเดินลายวงจร Escape Routing ได้อย่างราบรื่น
+  - นี่คือข้อพิสูจน์ว่าทำไมการทำ Optimization ร่วมกับข้อจำกัด DFM ทางกายภาพจึงเป็นทักษะที่ขาดไม่ได้ของ Senior Hardware Engineer
