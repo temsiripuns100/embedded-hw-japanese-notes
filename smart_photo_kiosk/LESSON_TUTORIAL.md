@@ -1,261 +1,442 @@
-# 📘 บทเรียนเชิงวิศวกรรม: การสร้างระบบค้นหาและพิมพ์ภาพถ่ายท่องเที่ยวอัตโนมัติด้วย Edge AI
-## (Building an Edge AI Smart Photo Kiosk with Python, OpenCV DNN & PySide6)
+# 📘 บทเรียนเชิงวิศวกรรมฉบับสมบูรณ์: การสร้างระบบค้นหาและพิมพ์ภาพถ่ายท่องเที่ยวอัตโนมัติด้วย Edge AI
+## (Building an Edge AI Smart Photo Kiosk with Python, OpenCV DNN, SQLite & PySide6)
 
 ---
 
 ## 📑 สารบัญ (Table of Contents)
 1. [บทนำและโจทย์ทางวิศวกรรม (The Engineering Challenge)](#1-บทนำและโจทย์ทางวิศวกรรม)
-2. [สถาปัตยกรรมระบบภาพรวม (System Architecture Overview)](#2-สถาปัตยกรรมระบบภาพรวม)
-3. [ทฤษฎี Computer Vision & Face Recognition](#3-ทฤษฎี-computer-vision--face-recognition)
-   - [3.1 การตรวจจับใบหน้า (Face Detection: YuNet)](#31-การตรวจจับใบหน้า-face-detection-yunet)
-   - [3.2 การปรับระนาบใบหน้า (Face Alignment & Landmark Normalization)](#32-การปรับระนาบใบหน้า-face-alignment)
-   - [3.3 การแปลงใบหน้าเป็นเวกเตอร์ (Face Embedding: SFace)](#33-การแปลงใบหน้าเป็นเวกเตอร์-face-embedding-sface)
-   - [3.4 การจับคู่และค้นหาเวกเตอร์ความเร็วสูง (Vectorized Cosine Similarity)](#34-การจับคู่และค้นหาเวกเตอร์ความเร็วสูง)
-4. [การออกแบบสถาปัตยกรรมซอฟต์แวร์ (Software Engineering & Concurrency)](#4-การออกแบบสถาปัตยกรรมซอฟต์แวร์)
-   - [4.1 ปัญหา Multi-threading Race Condition บน OpenCV DNN](#41-ปัญหา-multi-threading-race-condition)
-   - [4.2 การดัชนีรูปภาพแบบเพิ่มขึ้นทีละส่วน (Incremental Indexing & Caching ด้วย SQLite)](#42-การดัชนีรูปภาพแบบ-incremental)
-   - [4.3 โครงสร้าง Signal & Slot ใน PySide6 (Event-Driven Architecture)](#43-โครงสร้าง-signal--slot-ใน-pyside6)
-5. [เจาะลึกการทำงานของโค้ดหลัก (Code Walkthrough)](#5-เจาะลึกการทำงานของโค้ดหลัก)
-   - [5.1 Face Engine: ตรวจจับและสกัด Feature](#51-face-engine)
-   - [5.2 Photo Indexer: คลังเวกเตอร์และการคำนวณแบบ Matrix](#52-photo-indexer)
-   - [5.3 Camera Worker: การประมวลผลสตรีมวิดีโอแบบเรียลไทม์](#53-camera-worker)
-6. [โจทย์หน้างานจริงและการแก้ปัญหา (Production Engineering & Best Practices)](#6-โจทย์หน้างานจริงและการแก้ปัญหา)
-   - [6.1 การจัดการรูปถ่ายความละเอียดสูง (DSLR 24MP–48MP)](#61-การจัดการรูปถ่ายความละเอียดสูง)
-   - [6.2 การตรวจจับรูปภาพแบบกลุ่ม (Group & Family Photos)](#62-การตรวจจับรูปภาพแบบกลุ่ม)
-   - [6.3 สภาพแสง มุมกล้อง และการปรับแต่ง Sensitivity Threshold](#63-สภาพแสง-มุมกล้อง-และ-threshold)
-   - [6.4 การเชื่อมต่อเครื่องพิมพ์ภาพถ่ายและการบริหารจัดการคิวพิมพ์](#64-การเชื่อมต่อเครื่องพิมพ์ภาพถ่าย)
-   - [6.5 ความปลอดภัยของข้อมูลและความเป็นส่วนตัว (Privacy & PDPA)](#65-ความเป็นส่วนตัวและ-pdpa)
-7. [แบบฝึกหัดทบทวนและแนวทางต่อยอด (Exercises & Further Development)](#7-แบบฝึกหัดทบทวนและแนวทางต่อยอด)
+   - 1.1 บริบททางธุรกิจของระบบภาพถ่ายแหล่งท่องเที่ยว
+   - 1.2 ปัญหาคอขวดและข้อจำกัดของระบบเดิม
+   - 1.3 ข้อกำหนดทางวิศวกรรม (Engineering Specifications)
+   - 1.4 การเปรียบเทียบ: Edge Computing vs Cloud API
+2. [สถาปัตยกรรมระบบโดยรวม (System Architecture)](#2-สถาปัตยกรรมระบบโดยรวม)
+   - 2.1 แผนภาพสถาปัตยกรรม 2 Pipeline คู่ขนาน (Architecture Diagram)
+   - 2.2 ลำดับขั้นตอนการทำงานทั้งระบบ (End-to-End Sequence Diagram)
+3. [ทฤษฎี Computer Vision & Face Recognition เชิงลึก](#3-ทฤษฎี-computer-vision--face-recognition-เชิงลึก)
+   - 3.1 ทำไมไม่ใช้ Pixel Matching หรือ Template Matching?
+   - 3.2 การตรวจจับใบหน้าด้วยโมเดล YuNet (Anchor-based CNN)
+   - 3.3 การปรับระนาบใบหน้าด้วย 5 จุดอ้างอิง (Face Alignment & Affine Transform)
+   - 3.4 ทฤษฎี Deep Metric Learning และการสกัดเวกเตอร์ด้วย SFace
+   - 3.5 เวกเตอร์ 128 มิติ (128-D Face Embedding on Hypersphere)
+   - 3.6 คณิตศาสตร์การค้นหาเวกเตอร์ความเร็วสูง (Vectorized Cosine Similarity)
+4. [การออกแบบสถาปัตยกรรมซอฟต์แวร์และการทำงานแบบ Concurrency](#4-การออกแบบสถาปัตยกรรมซอฟต์แวร์และการทำงานแบบ-concurrency)
+   - 4.1 วิเคราะห์ปัญหา C++ Race Condition ใน OpenCV DNN
+   - 4.2 กลยุทธ์การแก้ปัญหาด้วย Threading Lock และ Worker Isolation
+   - 4.3 โครงสร้างฐานข้อมูลและการทำแคช (SQLite + In-Memory Matrix)
+   - 4.4 การดัชนีรูปภาพแบบเพิ่มทีละส่วน (Incremental Ingestion)
+   - 4.5 สถาปัตยกรรม Event-Driven ด้วย PySide6 Signal & Slot
+5. [เจาะลึกโค้ดและการทำงานทีละบรรทัด (Line-by-Line Code Walkthrough)](#5-เจาะลึกโค้ดและการทำงานทีละบรรทัด)
+   - 5.1 โมดูล FaceEngine (`core/face_engine.py`)
+   - 5.2 โมดูล PhotoIndexer (`core/indexer.py`)
+   - 5.3 โมดูล CameraWorker (`core/camera_worker.py`)
+   - 5.4 โมดูล MainWindow & Gallery UI (`ui/main_window.py`)
+6. [วิศวกรรมการผลิตและคู่มือการนำไปใช้งานจริง (Production Engineering Runbook)](#6-วิศวกรรมการผลิตและคู่มือการนำไปใช้งานจริง)
+   - 6.1 การจัดการรูปถ่ายความละเอียดสูงจากกล้องโปร (DSLR 24MP–48MP)
+   - 6.2 การรองรับภาพหมู่และภาพครอบครัว (One-to-Many Facial Mapping)
+   - 6.3 คู่มือการเลือกอุปกรณ์ฮาร์ดแวร์ (Hardware Procurement Sizing Guide)
+   - 6.4 การควบคุมสภาพแสงและการปรับจูน Sensitivity Threshold
+   - 6.5 การเชื่อมต่อเครื่องพิมพ์ภาพด่วน (Dye-Sublimation Photo Printers)
+   - 6.6 ความปลอดภัยของข้อมูลและการปฏิบัติตามกฎหมาย PDPA
+7. [แบบฝึกหัดทบทวนและแนวทางต่อยอด (Exercises & Roadmap)](#7-แบบฝึกหัดทบทวนและแนวทางต่อยอด)
 
 ---
 
 ## 1. บทนำและโจทย์ทางวิศวกรรม
 
-### บริบททางธุรกิจ (Business Context)
-ในแหล่งท่องเที่ยว เช่น สวนสนุก สวนสัตว์ พิพิธภัณฑ์ หรือจุดชมวิว ช่างภาพมักจะยืนถ่ายรูปนักท่องเที่ยวตามจุดไฮไลต์ต่างๆ ตลอดทั้งวัน รูปถ่ายหลายพันใบจะถูกส่งกลับมายังเคาน์เตอร์พิมพ์ภาพหน้าร้าน
+### 1.1 บริบททางธุรกิจของระบบภาพถ่ายแหล่งท่องเที่ยว
+ในธุรกิจสวนสนุก (Theme Parks), สวนน้ำ, พิพิธภัณฑ์, งานอีเวนต์, หรือจุดชมวิว ช่างภาพมืออาชีพจะกระจายตัวอยู่ตามจุดไฮไลต์ต่างๆ ตลอดทั้งวัน เพื่อถ่ายภาพความประทับใจของนักท่องเที่ยว รูปถ่ายที่ได้จะถูกส่งผ่านระบบ Wi-Fi หรือการนำ SD Card มาถ่ายโอนเข้าสู่เครื่องคอมพิวเตอร์ที่เคาน์เตอร์พิมพ์ภาพหน้าร้าน (Photo Kiosk Counter)
 
-### ปัญหาของระบบเดิม (The Bottleneck)
-* นักท่องเที่ยวต้องมายืนเปิดดูรูปทีละโฟลเดอร์ หรือพนักงานต้องจำหน้าลูกค้าแล้วเลื่อนหารูปในคลังภาพขนาดใหญ่
-* ใช้เวลาต่อคิวนาน ลูกค้าหมดความสนใจ เกิดความแออัดหน้าร้าน และสูญเสียโอกาสในการขาย (Lost Revenue)
+### 1.2 ปัญหาคอขวดและข้อจำกัดของระบบเดิม
+* **ค้นหาช้า:** ในหนึ่งวันมีรูปถ่ายสะสม $5,000 - 20,000$ รูป การให้พนักงานหรือลูกค้ามาเลื่อนดูทีละหน้าจอทำให้เกิดคิวยาว ลูกค้าหมดความอดทนและเดินออกจากร้าน
+* **จำหน้าไม่ได้:** พนักงานไม่สามารถจดจำหน้านักท่องเที่ยวทุกคนที่เดินเข้ามาในร้านได้
+* **ยอดขายตก:** อัตราการเปลี่ยนผู้เข้าชมเป็นผู้ซื้อ (Conversion Rate) ตกต่ำเนื่องจากความล่าช้าในการค้นหาภาพ
 
-### เป้าหมายทางวิศวกรรม (Engineering Goals)
-1. **ความเร็ว (Latency):** เมื่อลูกค้าเดินเข้ามาหยุดยืนหน้าจอ Kiosk ระบบต้องดึงรูปภาพที่ตรงกันทั้งหมดขึ้นมาแสดงผลภายใน **< 1 วินาที**
-2. **ความคุ้มค่า (Edge Computing):** ทำงานแบบ Offline ในคอมพิวเตอร์ประจำเคาน์เตอร์ (Windows Host) ไม่ต้องเสียค่า API รายเดือนบน Cloud
-3. **ความแม่นยำ (Accuracy):** สามารถแยกแยะใบหน้าได้แม้ถ่ายจากคนละมุม เปลี่ยนสีหน้า หรือมีคนอื่นยืนร่วมอยู่ในภาพ
+### 1.3 ข้อกำหนดทางวิศวกรรม (Engineering Specifications)
 
----
+| ตัวชี้วัด (Metric) | เป้าหมายที่ต้องการ (Target SLA) | ผลการทำจริงในโปรเจกต์นี้ |
+| :--- | :--- | :--- |
+| **Search Latency (ความเร็วค้นหา)** | $< 1.0$ วินาที | **$< 0.001$ วินาที ($< 1$ ms)** ด้วย Vector Dot Product |
+| **Detection Speed (ตรวจจับใบหน้า)** | $< 50$ ms ต่อเฟรม | **$\sim 18 - 25$ ms** ด้วย YuNet บน CPU |
+| **Platform Compatibility** | ใช้งานบน Windows 10/11 | ใช้งานได้ทันที 100% (Native Python + PySide6) |
+| **Internet Dependency** | ทำงาน Offline ได้ 100% | Edge AI รันในเครื่องทั้งหมด ไม่ต่อเน็ตก็ทำงานได้ |
+| **Photo Quality Retention** | คงความละเอียดภาพ 100% | ระบบสแกนพิกัดแล้วย้อนกลับไปอ่านไฟล์ต้นฉบับ |
 
-## 2. สถาปัตยกรรมระบบภาพรวม
+### 1.4 การเปรียบเทียบ: Edge Computing vs Cloud API
 
-ระบบแบ่งการทำงานออกเป็น **2 Pipeline คู่ขนาน** ที่ทำงานเป็นอิสระต่อกัน:
-
-```text
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│ [PIPELINE 1: Background Photo Ingestion]                                         │
-│                                                                                  │
-│ กล้องช่างภาพ ──(Wi-Fi/LAN)──► โฟลเดอร์ Windows (C:\TourPhotos\)                   │
-│                                      │                                           │
-│                             Folder Watcher (ดักจับไฟล์ใหม่)                        │
-│                                      │                                           │
-│                             YuNet (ตรวจจับทุกใบหน้าในภาพ)                         │
-│                                      │                                           │
-│                             SFace (สกัดเวกเตอร์ 128 มิติ)                         │
-│                                      │                                           │
-│                             SQLite Cache + In-Memory Matrix                      │
-└──────────────────────────────────────────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│ [PIPELINE 2: Live Kiosk Sensor & Instant Match]                                 │
-│                                                                                  │
-│ กล้องหน้า Kiosk ──► Real-time Camera Worker (OpenCV QThread)                     │
-│                               │                                                  │
-│                      YuNet (ตรวจพบใบหน้าลูกค้าสด)                                │
-│                               │                                                  │
-│                      SFace (สกัดเวกเตอร์ลูกค้า 128 มิติ)                          │
-│                               │                                                  │
-│             Vector Dot Product: Q @ DB_Matrix.T (ใช้เวลา < 1ms)                 │
-│                               │                                                  │
-│         PySide6 UI: กรองภาพที่คล้ายกันเกินเกณฑ์ (Threshold >= 0.36)                │
-│                               │                                                  │
-│         แสดงผลบนจอ Display ──► ลูกค้าเลือกภาพ ──► สั่งพิมพ์ออกเครื่องพิมพ์          │
-└──────────────────────────────────────────────────────────────────────────────────┘
+```
++------------------------------------+------------------------------------+
+|         Cloud-based AI             |        Edge AI (โปรเจกต์นี้)        |
+|  (AWS Rekognition / Azure Face)    |       (OpenCV YuNet + SFace)       |
++------------------------------------+------------------------------------+
+| - มีค่าใช้จ่าย $1 - $3 ต่อ 1,000 รูป| - ฟรี 100% ไม่มีค่าบริการรายเดือน  |
+| - ถ่าย 10,000 รูป/วัน = $300+/เดือน | - ค่าซอฟต์แวร์เป็น 0 บาท            |
+| - ต้องต่ออินเทอร์เน็ตความเร็วสูง     | - ทำงาน Offline หน้างานได้ 100%    |
+| - มีปัญหา Latency สัญญาณเน็ตสะดุด  | - Latency ระดับ Millisecond ในเครื่อง|
+| - มีความเสี่ยงเรื่อง PDPA ในการส่ง  | - รูปและเวกเตอร์ไม่เคยออกจากเครื่อง  |
+|   รูปคนขึ้นเซิร์ฟเวอร์ภายนอก        |   มีความปลอดภัยและเป็นส่วนตัวสูง     |
++------------------------------------+------------------------------------+
 ```
 
 ---
 
-## 3. ทฤษฎี Computer Vision & Face Recognition
+## 2. สถาปัตยกรรมระบบโดยรวม (System Architecture)
 
-การเปรียบเทียบใบหน้าไม่สามารถใช้การเทียบพิกเซลตรงๆ (Pixel Matching) หรือ Template Matching ได้ เพราะมุมกล้อง สภาพแสง ทรงผม และสีหน้าของลูกค้าเปลี่ยนตลอดเวลา วิทยาการสมัยใหม่จึงใช้ **Deep Metric Learning** ซึ่งแบ่งออกเป็น 4 ขั้นตอน:
+### 2.1 แผนภาพสถาปัตยกรรม 2 Pipeline คู่ขนาน
 
-### 3.1 การตรวจจับใบหน้า (Face Detection: YuNet)
-* **YuNet** เป็นโมเดล CNN น้ำหนักเบา (ขนาดเพียง ~232 KB) ที่พัฒนาขึ้นสำหรับ OpenCV โดยเฉพาะ
-* ทำงานด้วยโครงสร้างแบบ Single-Stage Anchor-based Detector
-* จุดเด่น: ตรวจจับใบหน้าได้เร็วกว่าโมเดลเดิม (เช่น Haar Cascade หรือ MTCNN) หลายสิบเท่า โดยใช้เวลาเพียง **~15-30 มิลลิวินาที** บน CPU ทั่วไป
-* ผลลัพธ์ที่ได้จาก YuNet ในแต่ละใบหน้าประกอบด้วย 15 ค่า:
-  $$\text{Face Output} = [x, y, w, h, x_{re}, y_{re}, x_{le}, y_{le}, x_{nt}, y_{nt}, x_{rcm}, y_{rcm}, x_{lcm}, y_{lcm}, \text{score}]$$
-  * $(x, y, w, h)$: พิกัด Bounding Box
-  * 5 Landmark Points: ตาขวา, ตาซ้าย, จมูก, มุมปากขวา, มุมปากซ้าย
-  * $\text{score}$: ค่าความเชื่อมั่น (Confidence Score 0.0 – 1.0)
+ระบบถูกออกแบบให้ทำงานแบบ Asynchronous แยกเป็น 2 Pipeline ชัดเจน:
 
-### 3.2 การปรับระนาบใบหน้า (Face Alignment)
-หากลูกค้าเอียงคอ หรือกล้องถ่ายจากมุมเฉียง ใบหน้าจะบิดเบี้ยว โมเดลจดจำใบหน้าจะไม่สามารถเทียบได้แม่นยำ  
-ฟังก์ชัน `recognizer.alignCrop(image, face)` จะคำนวณ **Affine Transformation** โดยหมุนและยืดภาพให้:
-* ตำแหน่งดวงตาทั้งสองข้างอยู่ในระนาบแนวนอนเดียวกันเสมอ
-* จุดกึ่งกลางจมูกและปากอยู่ตรงกลางกรอบภาพขนาดมาตรฐาน (112 $\times$ 112 พิกเซล)
+```mermaid
+flowchart TD
+    subgraph P1["Pipeline 1: Background Photo Ingestion"]
+        A["กล้องช่างภาพ (DSLR)"] -->|"Wi-Fi / LAN / SD Card"| B["โฟลเดอร์ภาพถ่าย Windows\n(e.g., demo_photos/)"]
+        B --> C["Folder Watcher Thread\n(ตรวจจับไฟล์ภาพใหม่ทุก 3 วิ)"]
+        C --> D["FaceEngine: YuNet\n(ตรวจจับทุกใบหน้าในรูป)"]
+        D --> E["FaceEngine: SFace\n(สกัดเวกเตอร์ 128 มิติ)"]
+        E --> F[("SQLite Database\n(ตาราง photos & faces)")]
+        F --> G["In-Memory Matrix Cache\n(เมทริกซ์ขนาด N x 128)"]
+    end
 
-### 3.3 การแปลงใบหน้าเป็นเวกเตอร์ (Face Embedding: SFace)
-* **SFace** ใช้โครงสร้างเครือข่ายประสาทเทียมแบบ Deep CNN ฝึกฝนด้วยฟังก์ชันการสูญเสีย **SphereFace (Angular Margin Loss)**
-* โมเดลจะแปลงภาพใบหน้าที่ผ่านการ Align แล้ว ให้กลายเป็น **เวกเตอร์ตัวเลข 128 มิติ (128-dimensional Embedding Vector)**:
-  $$\vec{V} = [v_1, v_2, v_3, \dots, v_{128}] \in \mathbb{R}^{128}$$
-* **คุณสมบัติทางคณิตศาสตร์:**
-  * ใบหน้าของ "คนเดียวกัน" (แม้จะต่างมุม ต่างแสง ต่างทรงผม) เวกเตอร์จะชี้ไปใน **ทิศทางใกล้เคียงกัน** บน Hypersphere
-  * ใบหน้าของ "คนละคน" เวกเตอร์จะชี้ไปใน **ทิศทางที่ห่างกันมาก**
+    subgraph P2["Pipeline 2: Live Kiosk Sensor & Instant Match"]
+        H["กล้องหน้า Kiosk (Webcam/CCTV)"] --> I["CameraWorker Thread\n(OpenCV VideoCapture 30 FPS)"]
+        I --> J["YuNet: ตรวจจับใบหน้าลูกค้าสด"]
+        J --> K["SFace: สกัดเวกเตอร์ลูกค้า 128-D"]
+        K --> L["Vector Dot Product\n(Q @ Matrix.T)"]
+        L --> M{"คะแนน Cosine Sim\n>= Threshold (0.36) ?"}
+        M -->|ใช่| N["PySide6 MainWindow\n(แสดงผลในกริดแกลเลอรี)"]
+        M -->|ไม่ใช่| O["รอการตรวจจับรอบถัดไป"]
+        N --> P["ลูกค้า/พนักงานเลือกภาพ"]
+        P --> Q["ส่งพิมพ์ไปยังเครื่องพิมพ์\n(Photo Printer 4x6)"]
+    end
+```
 
-### 3.4 การจับคู่และค้นหาเวกเตอร์ความเร็วสูง (Vectorized Cosine Similarity)
-หลังจากทำการ Normalize เวกเตอร์ให้มีความยาว 1 ($\|\vec{V}\| = 1$) ค่าความคล้ายคลึงระหว่างเวกเตอร์สองตัวคำนวณได้จาก **Cosine Similarity**:
+### 2.2 ลำดับขั้นตอนการทำงานทั้งระบบ (End-to-End Sequence Diagram)
 
-$$\text{Similarity}(\vec{A}, \vec{B}) = \frac{\vec{A} \cdot \vec{B}}{\|\vec{A}\| \|\vec{B}\|} = \sum_{i=1}^{128} A_i B_i$$
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Photographer as ช่างภาพ
+    participant Folder as โฟลเดอร์ Windows
+    participant Indexer as PhotoIndexer (SQLite)
+    actor Tourist as นักท่องเที่ยว
+    participant Cam as Kiosk Camera
+    participant UI as PySide6 MainWindow
+    participant Printer as เครื่องพิมพ์รูปถ่าย
 
-เมื่อมีรูปถ่ายในระบบ $N$ ใบหน้า เราสามารถนำเวกเตอร์ทั้งหมดมารวมกันเป็นเมทริกซ์ $\mathbf{M} \in \mathbb{R}^{N \times 128}$  
-เมื่อมีลูกค้ามายืนหน้ากล้อง และได้เวกเตอร์ใบหน้าสด $\vec{Q} \in \mathbb{R}^{128}$ เราสามารถคำนวณความเหมือนกับทุกใบหน้าในคลังได้ด้วยการคูณเมทริกซ์เพียงครั้งเดียว:
+    Photographer->>Folder: ส่งไฟล์ภาพ JPEG ใหม่เข้ามา
+    Note over Indexer: ตรวจพบไฟล์ใหม่ทุก 3 วินาที
+    Folder->>Indexer: สแกนใบหน้า -> สกัดเวกเตอร์ 128-D
+    Indexer->>Indexer: เพิ่มเวกเตอร์ลงใน RAM Matrix Cache
+
+    Tourist->>Cam: เดินเข้ามาหยุดยืนหน้าจอ Kiosk
+    Cam->>UI: ตรวจพบใบหน้าสดของลูกค้า
+    UI->>Indexer: นำเวกเตอร์ลูกค้าไปคูณ Matrix Cache
+    Indexer-->>UI: ส่งรายการไฟล์ภาพที่ตรงกัน (< 1ms)
+    UI->>UI: แสดงผลรูปถ่ายของลูกค้าขึ้นจอ Display ทันที
+    Tourist->>UI: กดเลือกรูปภาพที่ชอบ 2 ใบ
+    Tourist->>UI: กดปุ่ม "พิมพ์ภาพที่เลือก"
+    UI->>Printer: สั่งพิมพ์รูปผ่าน Windows Print Driver
+    Printer-->>Tourist: รับรูปถ่ายที่พิมพ์เสร็จสิ้นภายใน 10 วินาที
+```
+
+---
+
+## 3. ทฤษฎี Computer Vision & Face Recognition เชิงลึก
+
+### 3.1 ทำไมไม่ใช้ Pixel Matching หรือ Template Matching?
+ภาพถ่ายใบหน้าคนมีความซับซ้อนสูงมาก ไม่สามารถเปรียบเทียบความคล้ายคลึงด้วยระยะห่างของพิกเซล (Pixel L2 / MSE) หรือ Color Histogram ได้ เนื่องจาก:
+1. **Pose Variation:** ลูกค้าเอียงคอ หันซ้าย หันขวา ก้ม หรือเงย
+2. **Illumination:** ถ่ายกลางแจ้งแดดจัด เทียบกับยืนในร่มแสงนีออน ค่าพิกเซล RGB จะต่างกันอย่างมหาศาล
+3. **Expression & Age:** การยิ้ม อ้าปาก หรือหลับตา ทำให้รูปทรงของกล้ามเนื้อบนใบหน้าเปลี่ยนรูป
+
+### 3.2 การตรวจจับใบหน้าด้วยโมเดล YuNet (Anchor-based CNN)
+**YuNet** เป็นโครงข่ายประสาทเทียมแบบ Single-Stage Convolutional Network ออกแบบมาเพื่อตรวจจับใบหน้าบน Edge Devices ด้วยความเร็วสูงมาก:
+
+* **Input Resolution:** รับภาพอินพุตขนาด $(W_{in}, H_{in})$
+* **Feature Pyramids:** สกัด Feature Map หลากหลายระดับเพื่อตรวจจับทั้งใบหน้าขนาดใหญ่ (ยืนใกล้กล้อง) และใบหน้าขนาดเล็ก (ยืนอยู่ไกล)
+* **Output Tensor 15 ค่า:** สำหรับแต่ละใบหน้าที่ตรวจพบ จะได้ข้อมูล:
+  $$[x, y, w, h, x_{re}, y_{re}, x_{le}, y_{le}, x_{nt}, y_{nt}, x_{rcm}, y_{rcm}, x_{lcm}, y_{lcm}, \text{score}]$$
+  * $(x, y, w, h)$: พิกัดกรอบสี่เหลี่ยมรอบใบหน้า (Bounding Box)
+  * $(x_{re}, y_{re})$: พิกัดกึ่งกลางรูม่านตาขวา (Right Eye)
+  * $(x_{le}, y_{le})$: พิกัดกึ่งกลางรูม่านตาซ้าย (Left Eye)
+  * $(x_{nt}, y_{nt})$: พิกัดปลายจมูก (Nose Tip)
+  * $(x_{rcm}, y_{rcm})$: พิกัดมุมปากขวา (Right Mouth Corner)
+  * $(x_{lcm}, y_{lcm})$: พิกัดมุมปากซ้าย (Left Mouth Corner)
+  * $\text{score} \in [0.0, 1.0]$: ค่าความมั่นใจของโมเดล
+
+### 3.3 การปรับระนาบใบหน้า (Face Alignment & Affine Transform)
+หากส่งภาพใบหน้าที่เอียงคอเข้าไปในโมเดลจดจำตัวตน ผลการสกัดเวกเตอร์จะเพี้ยนสูงมาก การทำ **Alignment** จึงเป็นหัวใจสำคัญ:
+
+1. กำหนดพิกัดอ้างอิงมาตรฐาน (Canonical Coordinates) ของใบหน้าที่ตั้งตรงบนขนาดภาพ $112 \times 112$:
+   * ตาขวามาตรฐาน: $(38.29, 51.70)$
+   * ตาซ้ายมาตรฐาน: $(73.53, 51.70)$
+2. คำนวณเมทริกซ์การแปลงสภาพเชิงระนาบ **2D Affine Transformation Matrix ($M \in \mathbb{R}^{2 \times 3}$)**:
+   $$\begin{bmatrix} x' \\ y' \end{bmatrix} = \begin{bmatrix} a & b \\ c & d \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} + \begin{bmatrix} t_x \\ t_y \end{bmatrix}$$
+3. หมุน ยืด และตัดภาพ (Warp & Crop) ให้ดวงตาทั้งสองข้างอยู่ในแนวนอนเสมอ ได้ภาพใบหน้าขนาด $112 \times 112$ พิกเซล ที่พร้อมส่งเข้าสู่โมเดล SFace
+
+### 3.4 ทฤษฎี Deep Metric Learning และการสกัดเวกเตอร์ด้วย SFace
+**SFace** เป็นโครงข่ายประสาทเทียมแบบ Deep CNN ที่ฝึกฝนด้วยแนวคิด **SphereFace (Angular Margin Loss)** แทนที่จะจำแนกคลาสแบบธรรมดา โมเดลจะเรียนรู้เพื่อแปลงภาพใบหน้าให้เป็นจุดพิกัดบนทรงกลมหลายมิติ (Hypersphere):
+
+$$\mathcal{L} = -\frac{1}{N} \sum_{i=1}^{N} \log \frac{e^{\|\vec{x}_i\| \cos(m \theta_{y_i})}}{e^{\|\vec{x}_i\| \cos(m \theta_{y_i})} + \sum_{j \neq y_i} e^{\|\vec{x}_i\| \cos(\theta_j)}}$$
+
+* $m \ge 1$: ตัวคูณ Angular Margin ที่บังคับให้เวกเตอร์ของบุคคลเดียวกันถูกบีบเข้าหากันให้แน่นขึ้นในเชิงมุม
+* การฝึกฝนแบบนี้ทำให้ระยะเชิงมุมระหว่างภาพคนละคนกว้างขึ้นอย่างชัดเจน
+
+### 3.5 เวกเตอร์ 128 มิติ (128-D Face Embedding on Hypersphere)
+ผลลัพธ์จากการรันภาพ $112 \times 112$ ผ่าน SFace คือเวกเตอร์จำนวนจริง 128 ตัว:
+$$\vec{V} = [v_0, v_1, v_2, \dots, v_{127}] \in \mathbb{R}^{128}$$
+
+เพื่อความสะดวกในการเปรียบเทียบ เราจะทำ **L2 Normalization**:
+$$\hat{V} = \frac{\vec{V}}{\|\vec{V}\|_2} = \frac{\vec{V}}{\sqrt{\sum_{k=0}^{127} v_k^2}}$$
+ทำให้ขนาดความยาวของเวกเตอร์ $\|\hat{V}\| = 1.0$ เสมอ
+
+### 3.6 คณิตศาสตร์การค้นหาเวกเตอร์ความเร็วสูง (Vectorized Cosine Similarity)
+เมื่อเวกเตอร์มีความยาวเท่ากับ 1 ค่า **Cosine Similarity** ระหว่างเวกเตอร์สองตัว $\vec{A}$ และ $\vec{B}$ จะมีค่าเท่ากับการทำ **Dot Product** ธรรมดา:
+
+$$\text{CosineSimilarity}(\vec{A}, \vec{B}) = \vec{A} \cdot \vec{B} = \sum_{k=0}^{127} A_k B_k$$
+
+หากในคลังรูปภาพมี $N$ ใบหน้า เรานำเวกเตอร์ทั้งหมดมารวมเป็นเมทริกซ์ $\mathbf{M} \in \mathbb{R}^{N \times 128}$:
+$$\mathbf{M} = \begin{bmatrix} \text{—} & \vec{V}_1 & \text{—} \\ \text{—} & \vec{V}_2 & \text{—} \\ & \vdots & \\ \text{—} & \vec{V}_N & \text{—} \end{bmatrix}$$
+
+เมื่อมีลูกค้ามายืนหน้ากล้อง และได้เวกเตอร์ $\vec{Q} \in \mathbb{R}^{128}$ การหาความคล้ายคลึงกับทุกรูปในระบบทำได้ด้วย:
 
 $$\vec{S} = \mathbf{M} \times \vec{Q}^T \quad \in \mathbb{R}^N$$
 
-* การคำนวณนี้ใน NumPy หรือ BLAS Library ใช้เวลาเพียง **0.0005 วินาที สำหรับ 10,000 ใบหน้า!**
-* **การตัดสินผล (Thresholding):**
-  * สำหรับโมเดล SFace ค่า Cosine Similarity ปกติ:
-    * $\ge 0.363$: จัดว่าเป็น "บุคคลเดียวกัน" (Same Identity)
-    * $< 0.300$: จัดว่าเป็น "คนละคน" (Different Person)
+* การคูณนี้ถูกประมวลผลด้วยคำสั่ง SIMD (AVX2/FMA) บน CPU ผ่าน NumPy หรือ OpenBLAS
+* **ประสิทธิภาพ:** เมทริกซ์ขนาด $10,000 \times 128$ ใช้เวลาคำนวณเพียง **$0.0003$ วินาที ($0.3$ ms)!**
+* **เกณฑ์การตัดสิน (Threshold Criteria):**
+  * สำหรับโมเดล SFace ค่า Cosine Similarity:
+    * $\ge 0.363$: จัดว่าเป็น "บุคคลเดียวกัน" (ค่าเริ่มต้นมาตรฐานของ OpenCV Zoo)
+    * ในแอปพลิเคชันนี้เราทำ Slider ให้ปรับได้ระหว่าง $0.25 - 0.55$ เพื่อความยืดหยุ่นหน้างาน
 
 ---
 
-## 4. การออกแบบสถาปัตยกรรมซอฟต์แวร์
+## 4. การออกแบบสถาปัตยกรรมซอฟต์แวร์และการทำงานแบบ Concurrency
 
-### 4.1 ปัญหา Multi-threading Race Condition บน OpenCV DNN
-ในการพัฒนา Desktop App ที่มีกล้องวิดีโอสด (Live Video) ร่วมกับระบบประมวลผลพื้นหลัง:
-* **ปัญหาที่มักพบ:** หากเธรดกล้อง (Camera Thread) และเธรดสแกนโฟลเดอร์ (Scan Thread) เรียกใช้งานอ็อบเจกต์ `cv2.FaceDetectorYN` เดียวกันพร้อมกัน จะเกิดข้อผิดพลาดรุนแรงระดับ C++:
-  ```text
-  cv2.error: Unknown C++ exception from OpenCV code
-  ```
-  เนื่องจากฟังก์ชัน `setInputSize()` และ `detect()` ใน OpenCV C++ ภายในมีการแก้ไขหน่วยความจำ Buffer เดียวกัน (Not Thread-Safe)
-* **วิธีแก้:**
-  1. ใช้ **Mutex Lock (`threading.Lock()`)** ครอบทุกจุดที่มีการเรียกตรวจจับใบหน้า
-  2. หรือแยก Instance ของโมเดลให้แต่ละ Thread ถือครองอิสระต่อกัน
+### 4.1 วิเคราะห์ปัญหา C++ Race Condition ใน OpenCV DNN
+ระหว่างการพัฒนาแอปพลิเคชัน หากปล่อยให้มี 2 เธรดทำงานพร้อมกัน:
+1. เธรดที่ 1 (`CameraWorker`): ดึงเฟรมกล้องมา Detect หน้าคนทุกๆ 33 ms
+2. เธรดที่ 2 (`PhotoIndexer` / UI Thread): สแกนรูปภาพในโฟลเดอร์มา Detect หน้าคน
 
-### 4.2 การดัชนีรูปภาพแบบ Incremental ด้วย SQLite
-เพื่อไม่ให้ระบบต้องเสียเวลาสแกนรูปเดิมซ้ำๆ ทุกครั้งที่เปิดโปรแกรม:
-* บันทึกข้อมูลเมทาดาทาของไฟล์ภาพ: `mtime` (เวลาแก้ไขล่าสุด) และ `file_size` ลงในตาราง `photos`
-* เมื่อตรวจพบไฟล์ใหม่ ระบบจะตรวจสอบ:
-  ```sql
-  SELECT mtime, file_size FROM photos WHERE photo_path = ?
-  ```
-  ถ้าค่าเดิมตรงกัน ให้ **ข้าม (Skip)** ทันที ทำให้การรีสแกนโฟลเดอร์ที่มีภาพเป็นหมื่นๆ รูป ใช้เวลาไม่ถึง 0.1 วินาที
+จะเกิดข้อผิดพลาดรุนแรงระดับ C++ และทำให้แอป Crash ทันที:
+```text
+cv2.error: Unknown C++ exception from OpenCV code
+```
+**สาเหตุเชิงลึก:** คลาส `cv2.FaceDetectorYN` มีการจัดการหน่วยความจำภายในเป็น C++ Pointer เมื่อเรียก `detector.setInputSize(w, h)` ตัว C++ Runtime จะทำการ Allocate ขนาด Blob ใน Net Engine ใหม่ หากมีอีกเธรดหนึ่งเรียก `detector.detect(img)` จังหวะเดียวกัน Pointer จะชี้ไปที่หน่วยความจำที่ไม่ถูกต้องทันที
 
-### 4.3 โครงสร้าง Signal & Slot ใน PySide6 (Event-Driven Architecture)
-UI ของ Desktop App จะต้องไม่เกิดอาการค้าง (Freeze) หรือ "Not Responding":
-* **CameraWorker (QThread):** ทำหน้าที่ดึงเฟรมจาก Webcam และวาดกล่องเล็ง (HUD) อย่างต่อเนื่อง 30 FPS
-* ส่งข้อมูลข้าม Thread ด้วย Qt Signal:
-  * `frame_ready(QImage)` $\to$ ส่งภาพไปเรนเดอร์บน QLabel
-  * `face_detected(crop, feat)` $\to$ ส่งเวกเตอร์ไปค้นหาในฐานข้อมูล
-  * `face_cleared()` $\to$ แจ้งเตือนเมื่อลูกค้าเดินออกจากหน้ากล้อง
-
----
-
-## 5. เจาะลึกการทำงานของโค้ดหลัก
-
-### 5.1 Face Engine: ตรวจจับและสกัด Feature
-ไฟล์: [`core/face_engine.py`](file:///c:/Users/ndrs-admin/Documents/antigravity/learning/smart_photo_kiosk/core/face_engine.py)
+### 4.2 กลยุทธ์การแก้ปัญหาด้วย Threading Lock
+เราแก้ไขปัญหานี้อย่างสมบูรณ์แบบด้วยการใช้ **Mutual Exclusion Lock (`threading.Lock`)**:
 
 ```python
-# การแปลงขนาดภาพก่อน Detect เพื่อความเร็ว และแปลงพิกัดกลับ
-scale = max_detect_dim / float(max(orig_h, orig_w)) if max(orig_h, orig_w) > max_detect_dim else 1.0
-detect_img = cv2.resize(img_bgr, (int(orig_w * scale), int(orig_h * scale)))
+class FaceEngine:
+    def __init__(self, ...):
+        self._lock = threading.Lock()
 
-with self._lock:
-    self.detector.setInputSize((detect_img.shape[1], detect_img.shape[0]))
-    _, faces = self.detector.detect(detect_img)
+    def extract_faces_from_image(self, img_bgr, max_detect_dim=1280):
+        # ป้องกันไม่ให้สองเธรดเรียกใช้ C++ DNN พร้อมกัน
+        with self._lock:
+            self.detector.setInputSize((detect_w, detect_h))
+            status, faces = self.detector.detect(detect_img)
+            # Alignment และ Feature Extraction
+            return results
+```
+เมื่อเธรดหนึ่งกำลังประมวลผล อีกเธรดหนึ่งจะรอจนกว่าจะเสร็จสิ้น ใช้เวลาเฉลี่ยเพียงไม่กี่สิบมิลลิวินาที จึงไม่กระทบต่อความลื่นไหลของภาพวิดีโอสด
 
-    for face in faces:
-        # สเกลพิกัดใบหน้ากลับสู่ขนาดของรูปต้นฉบับ เพื่อให้ภาพ Crop ชัดที่สุด
-        face_orig = face / scale
-        aligned_face = self.recognizer.alignCrop(img_bgr, face_orig)
-        feat = self.recognizer.feature(aligned_face).flatten()
-        feat = feat / np.linalg.norm(feat)  # Normalize เป็นความยาว 1
+### 4.3 โครงสร้างฐานข้อมูลและการทำแคช (SQLite Database Schema)
+เราออกแบบฐานข้อมูล SQLite (`photo_index.db`) ด้วยโครงสร้างความสัมพันธ์แบบ 1-to-Many:
+
+```mermaid
+erDiagram
+    photos ||--o{ faces : "contains"
+    photos {
+        TEXT photo_path PK "ที่อยู่ไฟล์ภาพ"
+        REAL mtime "เวลาแก้ไขไฟล์ล่าสุด"
+        INTEGER file_size "ขนาดไฟล์ (bytes)"
+        INTEGER face_count "จำนวนใบหน้าที่พบในภาพ"
+    }
+    faces {
+        INTEGER id PK "รหัสแถว Auto Increment"
+        TEXT photo_path FK "เชื่อมโยงไปยังตาราง photos"
+        INTEGER bbox_x "พิกัด X"
+        INTEGER bbox_y "พิกัด Y"
+        INTEGER bbox_w "ความกว้างใบหน้า"
+        INTEGER bbox_h "ความสูงใบหน้า"
+        BLOB embedding "เวกเตอร์ 128 มิติ (float32 bytes)"
+        REAL score "ค่าความเชื่อมั่นของใบหน้า"
+    }
 ```
 
-### 5.2 Photo Indexer: คลังเวกเตอร์และการคำนวณแบบ Matrix
-ไฟล์: [`core/indexer.py`](file:///c:/Users/ndrs-admin/Documents/antigravity/learning/smart_photo_kiosk/core/indexer.py)
+* เวกเตอร์ 128 มิติ (ชนิด `np.float32`) จะถูกแปลงเป็นไบต์ดิบ (`tobytes()`) ขนาดคงที่ $128 \times 4 = 512$ ไบต์ และเก็บลงคอลัมน์ `BLOB`
+* เมื่อแอปเปิดขึ้นมา ฟังก์ชัน `load_cache_from_db()` จะอ่าน BLOB ทั้งหมดขึ้นมาแปลงกลับเป็น NumPy Matrix ขนาด $(N, 128)$ ครั้งเดียวในหน่วยความจำ RAM
+
+### 4.4 การดัชนีรูปภาพแบบเพิ่มทีละส่วน (Incremental Ingestion)
+เพื่อความเร็วในการทำงาน ระบบจะไม่สแกนรูปเดิมซ้ำ:
+1. ตรวจสอบไฟล์ในโฟลเดอร์: ดึงค่า `st_mtime` และ `st_size` ของแต่ละไฟล์ภาพ
+2. ตรวจสอบกับฐานข้อมูล: หาก `photo_path` มีอยู่แล้ว และเวลาแก้ไขตรงกัน จะ **ข้าม (Skip)** ทันที
+3. ประมวลผลเฉพาะไฟล์ใหม่หรือไฟล์ที่มีการแก้ไขเท่านั้น
+
+### 4.5 สถาปัตยกรรม Event-Driven ด้วย PySide6 Signal & Slot
+ใน GUI Programming ห้ามมิให้ Background Thread เข้าไปสั่งแก้ไขวิดเจ็ตบนหน้าจอโดยตรง เพราะจะทำให้ระบบปฏิบัติการ Windows บังคับปิดโปรแกรม (GUI Thread Violation):
+
+```text
+[CameraWorker QThread] ──(Signal: frame_ready)────► [MainWindow Slot: _on_camera_frame]
+[CameraWorker QThread] ──(Signal: face_detected)──► [MainWindow Slot: _on_face_detected]
+[CameraWorker QThread] ──(Signal: face_cleared)───► [MainWindow Slot: _on_face_cleared]
+[PhotoCardWidget]      ──(Signal: print_clicked)──► [MainWindow Slot: _on_print_single]
+```
+
+---
+
+## 5. เจาะลึกโค้ดและการทำงานทีละบรรทัด (Line-by-Line Code Walkthrough)
+
+### 5.1 โมดูล FaceEngine (`core/face_engine.py`)
 
 ```python
-def search_by_face(self, query_feat: np.ndarray, threshold: float = 0.36):
-    # คูณเมทริกซ์ (N, 128) x (128,) ได้ค่า Cosine Similarity ของทุกรูปพร้อมกัน
+# รองรับการเปิดไฟล์ภาพที่มีชื่อภาษาไทยหรืออักขระพิเศษบน Windows
+def extract_faces_from_file(self, file_path: str):
+    with open(file_path, "rb") as f:
+        bytes_data = bytearray(f.read())
+    nparr = np.asarray(bytes_data, dtype=np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)  # เลี่ยงข้อจำกัดของ cv2.imread บน Windows
+    return self.extract_faces_from_image(img)
+```
+* **คำอธิบาย:** บนระบบปฏิบัติการ Windows ฟังก์ชัน `cv2.imread()` ไม่รองรับ Path ที่มีตัวอักษรภาษาไทยหรือ Unicode (จะคืนค่า `None`) การอ่านไฟล์ผ่าน `open(file_path, "rb")` แล้วใช้ `cv2.imdecode()` จะแก้ปัญหานี้ได้อย่างสมบูรณ์
+
+```python
+# การย่อขนาดภาพเพื่อตรวจจับอย่างรวดเร็ว (Downscale for Detection Speed)
+scale = 1.0
+if max(orig_h, orig_w) > max_detect_dim:
+    scale = max_detect_dim / float(max(orig_h, orig_w))
+    detect_img = cv2.resize(img_bgr, (int(orig_w * scale), int(orig_h * scale)))
+```
+* **คำอธิบาย:** สำหรับภาพจากกล้องโปร DSLR ขนาด 24 ล้านพิกเซล (6000 $\times$ 4000) หากส่งเข้าโมเดลตรงๆ จะกินเวลาเกือบ 0.5 วินาที การย่อภาพลงมาเหลือด้านยาวไม่เกิน 1280px จะทำให้ตรวจจับเสร็จใน 20-30 ms จากนั้นจึงสเกลพิกัดใบหน้ากลับด้วยตัวคูณ `1.0 / scale` เพื่อคร็อปจากภาพความละเอียดสูงต้นฉบับ
+
+### 5.2 โมดูล PhotoIndexer (`core/indexer.py`)
+
+```python
+def search_by_face(self, query_feat: np.ndarray, threshold: float = 0.38, top_k: int = 50):
+    if self.matrix.shape[0] == 0:
+        return []
+
+    # คูณเมทริกซ์ 1 บรรทัด หาความคล้ายกับทุกรูปในระบบพร้อมกัน
     sims = np.dot(self.matrix, query_feat)
 
-    # กรองเฉพาะภาพที่ความเหมือนมากกว่า Threshold
+    # กรองเฉพาะแถวที่ความเหมือนมากกว่าเกณฑ์
     matched_indices = np.where(sims >= threshold)[0]
-
-    # กรณีภาพกลุ่ม (1 ภาพมีหลายใบหน้า) ให้เลือกคะแนนสูงสุดของภาพนั้น
+    
     photo_matches = {}
     for idx in matched_indices:
         sim = float(sims[idx])
-        path = self.records[idx]["photo_path"]
-        if path not in photo_matches or sim > photo_matches[path]["similarity"]:
-            photo_matches[path] = {"photo_path": path, "similarity": sim}
+        rec = self.records[idx]
+        p_path = rec["photo_path"]
+        
+        # คำนวณเป็นเปอร์เซ็นต์เข้าใจง่ายสำหรับแสดงบนการ์ด UI
+        match_pct = int(min(100, max(0, (sim - 0.20) / 0.50 * 100)))
 
-    return sorted(photo_matches.values(), key=lambda x: x["similarity"], reverse=True)
+        # หากเป็นรูปกลุ่มที่มีหลายคน ให้เก็บคะแนนสูงสุดของรูปนั้น
+        if p_path not in photo_matches or sim > photo_matches[p_path]["similarity"]:
+            photo_matches[p_path] = {
+                "photo_path": p_path,
+                "similarity": sim,
+                "match_percentage": match_pct,
+                "bbox": rec["bbox"]
+            }
+
+    results = list(photo_matches.values())
+    results.sort(key=lambda x: x["similarity"], reverse=True)
+    return results[:top_k]
 ```
 
-### 5.3 Camera Worker: การประมวลผลสตรีมวิดีโอแบบเรียลไทม์
-ไฟล์: [`core/camera_worker.py`](file:///c:/Users/ndrs-admin/Documents/antigravity/learning/smart_photo_kiosk/core/camera_worker.py)
+### 5.3 โมดูล CameraWorker (`core/camera_worker.py`)
 
-* ดึงภาพผ่าน `cv2.VideoCapture`
-* ใช้เทคนิค **Throttling (หน่วงรอบการ Match):** ตรวจจับกล่องใบหน้าทุก 30 FPS เพื่อให้ภาพลื่นไหล แต่นำเวกเตอร์ไป Query ในฐานข้อมูลทุกๆ 400ms เพื่อป้องกันไม่ให้หน้าจอผลลัพธ์กระพริบเปลี่ยนไปมา
-* วาด HUD (กรอบมุมเล็งเป้า Neon Cyberpunk สไตล์ Kiosk) ช่วยให้ลูกค้ารู้ว่ากล้องกำลังตรวจจับใบหน้าอยู่
+```python
+# การทำ Throttling ป้องกันการค้นหาถี่เกินไป
+now = time.time()
+if faces:
+    self.last_face_time = now
+    # เรียงลำดับเอาใบหน้าที่ใหญ่ที่สุด (คนที่ยืนใกล้กล้องที่สุด)
+    faces.sort(key=lambda item: item[0][2] * item[0][3], reverse=True)
+    primary_bbox, primary_feat, primary_score = faces[0]
+
+    # ส่งสัญญาณค้นหาทุกๆ 400ms เมื่อลูกค้ายืนนิ่งหน้ากล้อง
+    if now - self.last_query_time >= self.query_interval:
+        self.last_query_time = now
+        self.face_detected.emit(face_crop, primary_feat)
+```
+* **คำอธิบาย:** กล้องวิดีโอวิ่งที่ 30 FPS หากส่งคำสั่งค้นหาฐานข้อมูลทุก 33 ms หน้าจอแสดงผลจะกระพริบและประมวลผลซ้ำซ้อน การหน่วงเวลาด้วย `query_interval = 0.4` (400 ms) จะทำให้ระบบมีเสถียรภาพและนุ่มนวล
 
 ---
 
-## 6. โจทย์หน้างานจริงและการแก้ปัญหา (Production Engineering)
+## 6. วิศวกรรมการผลิตและคู่มือการนำไปใช้งานจริง (Production Engineering Runbook)
 
-### 6.1 การจัดการรูปถ่ายความละเอียดสูง (DSLR 24MP–48MP)
-* **ปัญหา:** หากนำรูปจากกล้องโปร (ขนาด 6000 $\times$ 4000 พิกเซล) เข้าโมเดล YuNet ตรงๆ จะใช้เวลา 300–500ms ต่อรูป ทำให้เครื่องช้า
-* **แนวทางแก้ไข (Resolution Pyramiding):**
-  1. ย่อภาพลงมาเหลือความยาวด้านมากสุดไม่เกิน `1280px` ก่อนส่งเข้า Face Detector
-  2. เมื่อได้ตำแหน่งพิกัด Landmark 5 จุด ให้นำตัวคูณ $(1 / scale)$ ไปขยายพิกัดกลับ
-  3. สั่ง Align และ Crop ใบหน้าจาก **ภาพขนาดเต็มต้นฉบับ (Original Raw Image)** ผลลัพธ์คือได้ความเร็วสูงระดับ 25ms แต่ความคมชัดของรายละเอียดใบหน้าไม่สูญเสียเลย
+### 6.1 การจัดการรูปถ่ายความละเอียดสูงจากกล้องโปร (DSLR 24MP–48MP)
+* **กลยุทธ์ Resolution Pyramiding:**
+  1. ไฟล์ภาพดิบถูกบันทึกลงในไดรฟ์ SSD NVMe ความเร็วสูง
+  2. Background Worker สร้าง Thumbnail ขนาดเล็ก ($320 \times 240$) เก็บไว้ในโฟลเดอร์แคชสำหรับแสดงผลบน UI ได้ทันทีโดยไม่ต้องโหลดไฟล์ภาพขนาดเต็ม 30MB ทุกครั้ง
+  3. เมื่อลูกค้ากดสั่งพิมพ์ จึงค่อยเรียกไฟล์ต้นฉบับขนาดเต็มส่งไปยังเครื่องพิมพ์ เพื่อให้ได้ภาพพิมพ์คมชัดระดับ 300 DPI
 
-### 6.2 การตรวจจับรูปภาพแบบกลุ่ม (Group & Family Photos)
-* ในตาราง `faces` ของฐานข้อมูล SQLite เราไม่ได้ผูก 1 รูป ต่อ 1 คน แต่ใช้ความสัมพันธ์แบบ **One-to-Many**:
-  * 1 แถวในตาราง `photos` สามารถเชื่อมกับหลายแถวในตาราง `faces`
-* **ตัวอย่าง:** รูป `family_trip.jpg` มี พ่อ, แม่, ลูก รวม 3 คน
-  * ถ้า "พ่อ" เดินผ่านกล้อง $\to$ แสดงรูป `family_trip.jpg`
-  * ถ้า "ลูก" เดินผ่านกล้อง $\to$ แสดงรูป `family_trip.jpg` เช่นกัน
+### 6.2 การรองรับภาพหมู่และภาพครอบครัว (One-to-Many Facial Mapping)
+ในรูปถ่ายท่องเที่ยว มากกว่า 70% จะเป็นภาพคู่หรือภาพกลุ่ม:
+* หากในรูป `IMG_0850.jpg` มีบุคคล A, B และ C ระบบจะสร้างแถวข้อมูลในตาราง `faces` จำนวน 3 แถว ที่มี `photo_path` เดียวกัน
+* เมื่อบุคคล A เดินมาหน้ากล้อง $\to$ รูป `IMG_0850.jpg` จะปรากฏ
+* เมื่อบุคคล B หรือ C เดินมาหน้ากล้อง $\to$ รูป `IMG_0850.jpg` ก็จะปรากฏให้คนเหล่านั้นเช่นเดียวกัน
 
-### 6.3 สภาพแสง มุมกล้อง และการปรับแต่ง Sensitivity Threshold
-* **สภาพแสงหน้าร้าน:** ควรติดตั้งไฟ Soft Light หรือ Ring Light เล็กๆ ส่องใบหน้าลูกค้า เพื่อไม่ให้เกิดเงามืดใต้ตาหรือหน้ามืดเวลาย้อนแสง
-* **การจูน Slider Threshold:**
-  * `0.30 - 0.34`: ผ่อนปรน (ตรวจจับง่ายขึ้น เหมาะสำหรับคนใส่แว่น/มุมหน้าเอียง แต่อาจมีรูปคนอื่นที่หน้าคล้ายกันปนมาบ้าง)
-  * `0.36 - 0.40`: **จุดสมดุลที่ดีที่สุดสำหรับงานผลิตจริง (Recommended)**
-  * `> 0.45`: เข้มงวดมาก (ป้องกันคนหน้าคล้าย 100% แต่อาจหลุดบางรูปถ้าลูกค้าเปลี่ยนทรงผมหรือหันข้าง)
+### 6.3 คู่มือการเลือกอุปกรณ์ฮาร์ดแวร์ (Hardware Procurement Sizing Guide)
 
-### 6.4 การเชื่อมต่อเครื่องพิมพ์ภาพถ่าย
-ในระบบโปรดักชันจริง สามารถส่งพิมพ์รูปได้ 2 วิธี:
-1. **ผ่าน Windows GDI / Print Spooler (Win32 API):**  
-   ใช้คำสั่ง `ShellExecute(0, "print", photo_path, None, ".", 0)` สั่งพิมพ์ผ่านไดรเวอร์ของ Windows โดยตรง
-2. **เครื่องพิมพ์ภาพด่วน (Dye-Sublimation Printers):**  
-   เช่น **DNP DS620** หรือ **Citizen CY-02** จะมี Hot Folder หรือ SDK เฉพาะที่สามารถสั่งพิมพ์ภาพขนาด 4$\times$6 นิ้ว ได้เสร็จสิ้นภายใน 8.9 วินาทีต่อใบ
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│              รายการฮาร์ดแวร์แนะนำสำหรับ Kiosk หน้าร้าน 1 จุด                     │
+├───────────────────────┬─────────────────────────────────────────────────────────┤
+│ อุปกรณ์               │ สเปกที่แนะนำสำหรับการใช้งานจริง                          │
+├───────────────────────┼─────────────────────────────────────────────────────────┤
+│ 1. เครื่องคอมพิวเตอร์ │ - CPU: Intel Core i5 (Gen 12+) หรือ AMD Ryzen 5 (5600G+)│
+│    (Host PC)          │ - RAM: 16 GB DDR4/DDR5                                  │
+│                       │ - Storage: M.2 NVMe SSD 1 TB (Read/Write > 3,000 MB/s)  │
+│                       │ - OS: Windows 10/11 Pro (64-bit)                        │
+├───────────────────────┼─────────────────────────────────────────────────────────┤
+│ 2. กล้องตรวจจับใบหน้า │ - Logitech Brio 4K หรือ Logitech C920 Pro HD            │
+│                       │ - ติดตั้งที่ระดับสายตา (ความสูง ~140 - 160 cm จากพื้น)   │
+├───────────────────────┼─────────────────────────────────────────────────────────┤
+│ 3. จอภาพแสดงผล        │ - จอสัมผัส Touchscreen ขนาด 27 - 32 นิ้ว (Full HD)      │
+│                       │   (เช่น ViewSonic, Dell หรือ Elo Touch)                 │
+├───────────────────────┼─────────────────────────────────────────────────────────┤
+│ 4. เครื่องพิมพ์ภาพถ่าย│ - Dye-Sublimation Photo Printer                         │
+│                       │   (เช่น DNP DS620, Citizen CY-02, หรือ Epson SureLab)   │
+│                       │ - ความเร็วในการพิมพ์: 8.9 วินาทีต่อภาพ (ขนาด 4x6 นิ้ว)   │
+├───────────────────────┼─────────────────────────────────────────────────────────┤
+│ 5. อุปกรณ์เสริมแสง    │ - ไฟวงแหวน LED (Ring Light) หรือ Soft Light ขนาดเล็ก    │
+│                       │   ติดเหนือหน้าจอ เพื่อให้ใบหน้าลูกค้าสว่างสม่ำเสมอ       │
+└───────────────────────┴─────────────────────────────────────────────────────────┘
+```
 
-### 6.5 ความปลอดภัยของข้อมูลและความเป็นส่วนตัว (Privacy & PDPA)
-* ควรตั้งระบบ **Auto-Purge Job** ลบรูปถ่ายและเวกเตอร์ใบหน้าเก่าที่เกิน 24 หรือ 48 ชั่วโมงทิ้งอัตโนมัติ เพื่อประหยัดพื้นที่ดิสก์และไม่ละเมิดความเป็นส่วนตัวของนักท่องเที่ยว
-* ติดตั้งป้ายแจ้งเตือนหน้าร้านว่า "ระบบกล้องตรวจจับภาพถ่ายอัตโนมัติเพื่อความสะดวกรวดเร็วในการเลือกซื้อภาพถ่าย"
+### 6.4 การควบคุมสภาพแสงและการปรับจูน Sensitivity Threshold
+* **ตารางคำแนะนำการตั้งค่า Threshold:**
+
+| ช่วงค่า Threshold | พฤติกรรมของระบบ | บริบทที่เหมาะสม |
+| :---: | :--- | :--- |
+| **0.28 – 0.33** | ค้นหาเจอง่ายมาก แต่อาจมีรูปคนอื่นที่หน้าคล้ายกันหลุดมาบ้าง | สถานที่ที่แสงสลัว หรือลูกค้าใส่หมวก/แว่นตาหนา |
+| **0.36 – 0.40** | **สมดุลสมบูรณ์แบบ (Recommended สำหรับการใช้งานจริง)** | สถานที่ที่มีสภาพแสงควบคุมอย่างเหมาะสม |
+| **0.42 – 0.50** | เข้มงวดมาก ป้องกันภาพคนอื่นปน 100% แต่อาจหลุดบางรูปที่มุมหน้าเอียง | งานประชุมทางการ หรืองานที่มีความละเอียดอ่อนสูง |
+
+### 6.5 การเชื่อมต่อเครื่องพิมพ์ภาพด่วน (Dye-Sublimation Photo Printers)
+* เครื่องพิมพ์ระบบ **Dye-Sublimation (สีระเหิดด้วยความร้อน)** เป็นมาตรฐานระดับโลกสำหรับร้านพิมพ์ภาพถ่ายด่วน:
+  * **กันน้ำและรอยนิ้วมือ 100%:** มีการเคลือบสารป้องกัน UV ชั้นบนสุดทันทีหลังพิมพ์
+  * **ไม่มีหัวพิมพ์ตัน:** ไม่ใช้น้ำหมึกเหลว แต่ใช้ม้วนฟิล์มสีริบบอน (YMC + Overcoat)
+  * **การสั่งพิมพ์อัตโนมัติ (Hot Folder):** เครื่องพิมพ์ระดับโปรสามารถตั้งค่า Hot Folder ของ Windows เมื่อระบบโยนไฟล์ภาพขนาด 4$\times$6 นิ้วลงโฟลเดอร์ เครื่องพิมพ์จะดูดไปพิมพ์ทันทีใน 8-10 วินาที
+
+### 6.6 ความปลอดภัยของข้อมูลและการปฏิบัติตามกฎหมาย PDPA
+1. **การตั้งค่า Auto-Purge:** ตั้งเวลางาน (Scheduled Task) ลบรูปถ่ายและล้างข้อมูลเวกเตอร์ใน SQLite ทุกๆ 24 ชั่วโมงหลังปิดร้าน
+2. **ป้ายประกาศแจ้งเตือน (Signage):** ติดป้ายแจ้งเตือนหน้าร้านว่า "ระบบกล้องตรวจจับภาพถ่ายอัตโนมัติเพื่ออำนวยความสะดวกในการเลือกซื้อภาพถ่ายที่ระลึก"
+3. **Local-Only:** ข้อมูลภาพถ่ายและเวกเตอร์ใบหน้าไม่เคยถูกอัปโหลดขึ้น Cloud จึงไม่เสี่ยงต่อการรั่วไหลของข้อมูลภายนอก
 
 ---
 
 ## 7. แบบฝึกหัดทบทวนและแนวทางต่อยอด (Exercises & Roadmap)
 
-### 💡 แบบฝึกหัดท้าทาย (Challenges)
+### 💡 แบบฝึกหัดท้าทายสำหรับวิศวกร (Engineering Challenges)
+
 1. **Challenge 1 (QR Code Photo Delivery):**  
-   เขียนส่วนต่อยอด ให้เมื่อลูกค้าเลือกรูปแล้ว สามารถสร้าง QR Code บนหน้าจอ เพื่อให้ลูกค้าใช้มือถือสแกนดาวน์โหลดไฟล์ JPEG ภาพต้นฉบับเข้ามือถือได้โดยตรง
-2. **Challenge 2 (Face Clustering / Unsupervised Grouping):**  
-   ใช้ขั้นตอนวิธี **DBSCAN** รวมรูปถ่ายของนักท่องเที่ยวคนเดียวกันที่ถ่ายไว้ตลอดทั้งวัน เข้าเป็นอัลบั้มส่วนตัว (Album ID) โดยอัตโนมัติก่อนที่ลูกค้าจะเดินมาถึงเคาน์เตอร์
-3. **Challenge 3 (Multiple Kiosk Sync):**  
-   ปรับจาก SQLite เป็น PostgreSQL + Milvus Vector Database เพื่อให้มี Kiosk ตั้งอยู่หลายจุดทั่วสวนสนุก เชื่อมต่อคลังภาพเดียวกันพร้อมกันได้ 10–20 จุด
+   พัฒนาฟังก์ชันสร้าง QR Code บนหน้าจอ เพื่อให้ลูกค้าสแกนดาวน์โหลดไฟล์ภาพดิจิทัลต้นฉบับเข้าโทรศัพท์มือถือผ่านเครือข่าย Wi-Fi ท้องถิ่น (Local Web Server ด้วย Python `http.server` หรือ `FastAPI`)
+2. **Challenge 2 (Unsupervised Face Clustering - DBSCAN):**  
+   ใช้ขั้นตอนวิธี **DBSCAN (Density-Based Spatial Clustering)** จัดกลุ่มรูปภาพของนักท่องเที่ยวแต่ละคนเข้าเป็นอัลบั้มส่วนตัวล่วงหน้าตั้งแต่ตอนที่รูปถูกส่งเข้ามาในระบบ โดยไม่ต้องรอลูกค้าเดินมาหน้ากล้อง
+3. **Challenge 3 (Distributed Multi-Kiosk Architecture):**  
+   ขยายสถาปัตยกรรมจาก SQLite แบบเครื่องเดียว ให้รองรับระบบ Kiosk 10 จุดรอบสวนสนุก โดยใช้ **Milvus Vector Database** หรือ **PostgreSQL + pgvector** เป็นศูนย์กลางร่วมกันผ่านเครือข่าย LAN
